@@ -4,10 +4,6 @@
  *
  */
 #include <xc.h>
-#include "uart.h"
-#include "sysclk.h"
-#include "gpio.h"
-
 // This define is to set the  µC to run on internal clock
 
 //#define CONFIG_CPU_USE_FRC
@@ -87,7 +83,7 @@
 #pragma config TSEQ =       0x0000
 #pragma config CSEQ =       0xffff
 
-
+#define SYS_FREQ 200000000 // 200MHz
 
 #define MS_SCALE    (100000)  /* Calculated for a 200MHz system */
 /* Convert milliseconds to core timer ticks */
@@ -95,6 +91,16 @@
 
 static unsigned int volatile global_tick = 0;
 
+static uint32_t volatile *gpio_lat_inv[] = 
+{
+  &LATAINV,
+  &LATBINV
+};
+
+void toggle_pin(int port, int pin)
+{
+  *gpio_lat_inv[port] = 1 << pin;
+}
 /**
  * @brief Read current core timer, used to create delays
  *
@@ -138,22 +144,132 @@ void delay_ms(uint32_t ms)
   delay_us_2(1000 * ms);
 }
 
+#define PERPHERAL1_CLK_DIV (1)
 
+/* UART, SPI, I2C, PMP */
+#define PERPHERAL2_CLK_DIV (1)
+
+/* For timers, comparator, output compare an input capture. */
+#define PERPHERAL3_CLK_DIV (4)
+
+/* For GPIOs*/
+#define PERPHERAL4_CLK_DIV (1)
+
+/**/
+#define PERPHERAL5_CLK_DIV (1)
+
+/* Deadman timer */
+#define PERPHERAL7_CLK_DIV (0)
+
+/* FOR EBI */
+#define PERPHERAL8_CLK_DIV (1)
+
+/* Set the clocks for different peripherals */
+void set_performance_mode()
+{
+  unsigned int cp0;
+
+  //Unlock sequence
+  asm volatile("di"); // disable all interrupts
+  SYSKEY = 0xAA996655;
+  SYSKEY = 0x556699AA;
+
+  //PB1DIV
+  //Peripheral Bus 1 cannot be turned off, so there's no need to turn it on
+  PB1DIVbits.PBDIV = PERPHERAL1_CLK_DIV; //Peripheral Bus 1 Clock Divisor Control (PBCLK1 is SYSCLK / 2)
+  
+  //PB2DIV
+  PB2DIVbits.PBDIV = PERPHERAL2_CLK_DIV; //Peripheral Bus 2 Clock Divisor Control (PBCLK2 is SYSCLK / 2)
+  PB2DIVbits.ON = 1; //Peripheral Bus 2 Output Clock Enable
+
+  PB3DIVbits.PBDIV = PERPHERAL3_CLK_DIV;
+  PB3DIVbits.ON = 1; 
+
+  PB4DIVbits.PBDIV = PERPHERAL4_CLK_DIV; 
+  PB4DIVbits.ON = 1; 
+
+  PB5DIVbits.PBDIV = PERPHERAL5_CLK_DIV; 
+  PB5DIVbits.ON = 1; 
+
+  PB7DIVbits.PBDIV = PERPHERAL7_CLK_DIV; 
+  PB7DIVbits.ON = 1; 
+
+  PB8DIVbits.PBDIV = PERPHERAL8_CLK_DIV; 
+  PB8DIVbits.ON = 1; 
+
+  // PRECON - Set up prefetch
+  PRECONbits.PFMSECEN = 0; // Flash SEC Interrrupt Enable ( Do not generate interrupt when PFMSECbit is set)
+  PRECONbits.PREFEN = 0b11; // Predictive prefech Enable (for any address)
+  PRECONbits.PFMWS  = 0b010; // PFM Access Time Defined in Terms of SYSCLK Wait States
+
+  // Set up caching -system control coprocessor- register number 16
+  cp0 = _mfc0(16, 0);
+  cp0 &= ~0x07;
+  cp0 |= 0b011; // K0 = Cacheable, non-coherent, write-back, write-allocate
+  _mtc0(16, 0, cp0);
+
+  // Lock Sequence
+  SYSKEY = 0x33333333;
+  asm volatile("ei"); // enable interrupts
+
+}
+
+uint32_t sysclk_timerfreq_get(void)
+{
+  return (SYS_FREQ / (PERPHERAL3_CLK_DIV + 1));
+}
+
+uint32_t sysclk_uartfreq_get(void)
+{
+  return (SYS_FREQ / (PERPHERAL2_CLK_DIV + 1));
+}
+
+void _putc4(char c)
+{
+  while (U4STAbits.UTXBF);
+  U4TXREG = c;
+}
 
 void print_str4(char *s)
 {
+  LATASET = 1 << 10;
+  delay_ms(10);
+
   while ( *s != '\0')
   {
-    uart_tx_char(PIC32_UART_4, *s++);
+    _putc4(*s++);
   }
+
+
 }
 
 void UART4_init(int baud_rate)
 {
+  int pb_uart_clk = sysclk_uartfreq_get();
+
   // Set rs485 bit to output
-  gpio_state_set(PIC32_PORTA, 10, true);
+  TRISACLR = 1 << 10;
+  // Set up the UART 6
+  // RX to RPF2
+  U4RXR = 0b0010;
+  TRISBbits.TRISB14 = 1; //set its IO to input
+
+  // TX to RPF3
+  RPF12R = 0b0010;
+
+  U4MODE = 0; // Set UART 5 off, prior to setting it up.
+  U4MODEbits.BRGH = 0; // standard speed mode, included in the previsous statmem
+
+  // formulat straight from datasheet.
+  U4BRG = pb_uart_clk / ( 16  * baud_rate) - 1; 
+  U4STA = 0; // disable Tx Rx, clear all flags
+  U4STAbits.UTXEN = 1;
+  U4STAbits.URXEN = 1;
+
+  U4MODEbits.PDSEL = 0; // controls how many data bits parity,... we chose default
+  U4MODEbits.STSEL = 0; // stop bit we chose 1
   
-  init_uart(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, baud_rate);
+  U4MODEbits.ON = 1; // Turn ON
 
   print_str4("Hello UART \n");
 }
@@ -161,9 +277,9 @@ void UART4_init(int baud_rate)
 
 char read_char4(void)
 {
-  if (uart_rx_any(PIC32_UART_4)) // Data ready
+  if (U4STAbits.URXDA) // Data ready
   {
-    return uart_rx_char(PIC32_UART_4);
+    return U4RXREG;
   }
   return 0;
 }
@@ -234,24 +350,20 @@ void __attribute__((vector(_TIMER_1_VECTOR), interrupt(ipl3AUTO), nomips16)) _ti
 int main(void)
 {
 
-  sysclk_init();
+  set_performance_mode();
 
-  gpio_init();
-  /*
   ANSELB = 0; // PIC starts all pins as analog, needs to be deactivated to be used
   TRISBCLR = 1 << 13; //set bit 13 port B to output
   TRISBCLR = 1 << 12; //set bit 12 port B to output
-  */
 
-  gpio_state_set(PIC32_PORTB ,12, true);
-  gpio_state_set(PIC32_PORTB ,13, true);
+  LATBSET = 1 <<  13; // Set bit 13 for Port B to 1
+  LATBSET = 1 <<  12; // Set bit 12 for Port B to 1
+
   // For the interrupt
 
   INTCONbits.MVEC = 1; // this enables the multi Vectored interrupt to tell the microprocessor
   // to allow different handlers for each different type of interrupt (timer2, timer 3)
   init_timer1(1000);
-
-  delay_ms(1000);
 
   UART4_init(115200);
 
@@ -262,9 +374,8 @@ int main(void)
 
       if (global_tick - millis >= 1000)
       {
-        gpio_state_toggle(PIC32_PORTB ,12);
-        gpio_state_toggle(PIC32_PORTB ,13);
-
+        toggle_pin(1, 12);
+        toggle_pin(1, 13);
         millis = global_tick;
       }
     }

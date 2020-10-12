@@ -476,62 +476,60 @@ static uint32_t volatile  * const output_map_register[] = {
   NULL,
 };
 
-static pic32_gpio_port_t getportnumber(pic32_pin_t nbr)
+static pic32_gpio_port_t getportnumber(pic32_pin_t pin)
 {
 
 #if ((PIC32_PIN_COUNT != 64) && (PIC32_PIN_COUNT != 100) && (PIC32_PIN_COUNT != 124))
-  if (nbr >= (int)PIC32_BASE_PORTK)
+  if (pin >= (int)PIC32_BASE_PORTK)
   {
     return PIC32_PORTK;    
   }
 #endif
 
 #if ((PIC32_PIN_COUNT != 64) && (PIC32_PIN_COUNT != 100))
-  if (nbr >= (int)PIC32_BASE_PORTJ)
+  if (pin >= (int)PIC32_BASE_PORTJ)
   {
     return PIC32_PORTJ;
   }
-  if (nbr >= (int)PIC32_BASE_PORTH)
+  if (pin >= (int)PIC32_BASE_PORTH)
   {
     return PIC32_PORTH;
   }
 #endif
 
-  if (nbr >= (int)PIC32_BASE_PORTG)
+  if (pin >= (int)PIC32_BASE_PORTG)
   {
     return PIC32_PORTG;
   }
-  if (nbr >= (int)PIC32_BASE_PORTF)
+  if (pin >= (int)PIC32_BASE_PORTF)
   {
     return PIC32_PORTF;
   }
-  if (nbr >= (int)PIC32_BASE_PORTE)
+  if (pin >= (int)PIC32_BASE_PORTE)
   {
     return PIC32_PORTE;
   }
-  if (nbr >= (int)PIC32_BASE_PORTD)
+  if (pin >= (int)PIC32_BASE_PORTD)
   {
     return PIC32_PORTD;
   }
-  if (nbr >= (int)PIC32_BASE_PORTC)
+  if (pin >= (int)PIC32_BASE_PORTC)
   {
     return PIC32_PORTC;
   }
-  if (nbr >= (int)PIC32_BASE_PORTB)
+  if (pin >= (int)PIC32_BASE_PORTB)
   {
     return PIC32_PORTB;
   }
 
 #if (PIC32_PIN_COUNT != 64)
-  if (nbr >= (int)PIC32_BASE_PORTA)
+  if (pin >= (int)PIC32_BASE_PORTA)
   {
     return PIC32_PORTA;
   }
 #endif
   return -1;
 }
-// This is not Impliemented, fetch the port number everytime, make it easy, like 
-// one shift or one operation only to get the port number.
 
 int gpio_output_map_set(int reg_index, uint8_t value)
 {
@@ -540,36 +538,50 @@ int gpio_output_map_set(int reg_index, uint8_t value)
   return OK;
 }
 
-void gpio_output_set(pic32_gpio_port_t port, pic32_pin_t nbr)
+void gpio_output_set(pic32_pin_t pin)
 {
-  //int prt = getportnumber(port);
-  BIT_CLR(gpio_tris[port], nbr);
+  pic32_gpio_port_t port = getportnumber(pin);
+  pin = pin - (port * PIC32_MAX_PORT_PIN);
+
+  BIT_CLR(gpio_tris[port], pin);
 }
-void gpio_input_set(pic32_gpio_port_t port, pic32_pin_t nbr)
+void gpio_input_set(pic32_pin_t pin)
 {
-  BIT_SET(gpio_tris[port], nbr);
+  pic32_gpio_port_t port = getportnumber(pin);
+  pin = pin - (port * PIC32_MAX_PORT_PIN);
+
+  BIT_SET(gpio_tris[port], pin);
 }
 
-void gpio_state_set(pic32_gpio_port_t port, pic32_pin_t nbr, bool state)
+void gpio_state_set(pic32_pin_t pin, bool state)
 {
+  pic32_gpio_port_t port = getportnumber(pin);
+  pin = pin - (port * PIC32_MAX_PORT_PIN);
+
   if(state)
   {
-    BIT_SET(gpio_lat[port], nbr);
+    BIT_SET(gpio_lat[port], pin);
   }
   else
   {
-    BIT_CLR(gpio_lat[port], nbr);
+    BIT_CLR(gpio_lat[port], pin);
   }
 }
 
-void gpio_state_toggle(pic32_gpio_port_t port, pic32_pin_t nbr)
+void gpio_state_toggle(pic32_pin_t pin)
 {
-  BIT_INV(gpio_lat[port], nbr);
+  pic32_gpio_port_t port = getportnumber(pin);
+  pin = pin - (port * PIC32_MAX_PORT_PIN);
+
+  BIT_INV(gpio_lat[port], pin);
 }
 
-bool gpio_state_get(pic32_gpio_port_t port, pic32_pin_t nbr)
+bool gpio_state_get(pic32_pin_t pin)
 {
-  return !((*gpio_port[port] & ~(1 << nbr)) == 0);
+  pic32_gpio_port_t port = getportnumber(pin);
+  pin = pin - (port * PIC32_MAX_PORT_PIN);
+
+  return !((*gpio_port[port] & ~(1 << pin)) == 0);
 }
 
 void gpio_init(void)

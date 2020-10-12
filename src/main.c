@@ -102,7 +102,7 @@ void print_str4(char *s)
 void UART4_init(int baud_rate)
 {
   // Set rs485 bit to output
-  gpio_state_set(PIC32_PORTA, 10, true);
+  gpio_state_set(pinA10, true);
   
   init_uart(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, baud_rate);
 
@@ -162,8 +162,8 @@ int main(void)
   TRISBCLR = 1 << 12; //set bit 12 port B to output
   */
 
-  gpio_state_set(PIC32_PORTB ,12, true);
-  gpio_state_set(PIC32_PORTB ,13, true);
+  gpio_state_set(pinB12, true);
+  gpio_state_set(pinB13, true);
   // For the interrupt
 
   INTCONbits.MVEC = 1; // this enables the multi Vectored interrupt to tell the microprocessor
@@ -181,8 +181,9 @@ int main(void)
 
       if (global_tick - millis >= 1000)
       {
-        gpio_state_toggle(PIC32_PORTB ,12);
-        gpio_state_toggle(PIC32_PORTB ,13);
+        gpio_state_toggle(pinB12);
+        gpio_state_toggle(pinB13);
+
 
         millis = global_tick;
       }

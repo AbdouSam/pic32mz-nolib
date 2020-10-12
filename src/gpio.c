@@ -2,6 +2,7 @@
 #include "helpers.h"
 #include <xc.h> 
 #include "pic32_config.h"
+#include "error.h"
 
 #if (PIC32_PIN_COUNT == 64)
 # define PIC32_PORT_COUNT 6
@@ -14,6 +15,17 @@
 #else
   #error "Pin Count Inavailable in this series"
 #endif
+
+#define INPUT_PIN_NC       0xFF
+#define GPIO_MAP_REG_MAX (PIC32_MAX_PORT_PIN * 4U) 
+
+#define PIC32_PIN_MAP_SELCTION_GROUP_1 0
+#define PIC32_PIN_MAP_SELCTION_GROUP_2 1
+#define PIC32_PIN_MAP_SELCTION_GROUP_3 2
+#define PIC32_PIN_MAP_SELCTION_GROUP_4 3
+
+#define is_regindex_valid(x) if (x > GPIO_MAP_REG_MAX) return (ERRMAX)
+
 
 static const uint32_t ports_direction[] =
 {
@@ -229,7 +241,7 @@ uint32_t volatile *gpio_lat[] =
 uint32_t volatile *gpio_port[] =
 {
 #if (PIC32_PIN_COUNT != 64)
-  &LATA,
+  &PORTA,
 #endif
   &PORTB,
   &PORTC,
@@ -246,8 +258,291 @@ uint32_t volatile *gpio_port[] =
 #endif
 };
 
+static const uint8_t pin_map[] = {
+  pinD2 ,
+  pinG8 ,
+  pinF4 ,
+  pinD10,
+  pinF1 ,
+  pinB9 ,
+  pinB10,
+  pinC14,
+  pinB5 ,
+  INPUT_PIN_NC,
+#if (PIC32_PIN_COUNT != 64)
+  pinC1 ,
+  pinD14,
+  pinG1 ,
+  pinA14,
+#else
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+#endif
+#if ((PIC32_PIN_COUNT != 100) && (PIC32_PIN_COUNT != 64))
+  pinD6 ,
+#else
+  INPUT_PIN_NC,
+#endif
+  INPUT_PIN_NC,
+
+  pinD3 ,
+  pinG7 ,
+  pinF5 ,
+  pinD11,
+  pinF0 ,
+  pinB1 ,
+  pinE5 ,
+  pinC13,
+  pinB3 ,
+  INPUT_PIN_NC,
+#if (PIC32_PIN_COUNT != 64)
+  pinC4 ,
+  pinD15,
+  pinG0 ,
+  pinA15,
+#else
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+#endif
+#if ((PIC32_PIN_COUNT != 100) && (PIC32_PIN_COUNT != 64))
+  pinD7 ,
+#else
+  INPUT_PIN_NC,
+#endif
+  INPUT_PIN_NC,
+
+  pinD9 ,
+  pinG6 ,
+  pinB8 ,
+  pinB15,
+  pinD4 ,
+  pinB0 ,
+  pinE3 ,
+  pinB7 ,
+  INPUT_PIN_NC,
+#if (PIC32_PIN_COUNT != 64)
+  pinF12,
+  pinD12,
+  pinF8 ,
+  pinC3 ,
+  pinE9 ,
+#else
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+
+#endif
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+
+  pinD1 ,
+  pinG9 ,
+  pinB14,
+  pinD0 ,
+  INPUT_PIN_NC,
+  pinB6 ,
+  pinD5 ,
+  pinB2 ,
+  pinF3 ,
+#if (PIC32_PIN_COUNT != 64)
+  pinF13,
+  INPUT_PIN_NC,
+  pinF2 ,
+  pinC2 ,
+  pinE8 ,
+#else
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+#endif
+  INPUT_PIN_NC,
+  INPUT_PIN_NC,
+};
+
+static uint32_t volatile  * const output_map_register[] = {
+  &RPD2R,
+  &RPG8R,
+  &RPF4R,
+  &RPD10R,
+  &RPF1R,
+  &RPB9R,
+  &RPB10R,
+  &RPC14R,
+  &RPB5R,
+  NULL,
+#if (PIC32_PIN_COUNT != 64)
+  &RPC1R,
+  &RPD14R,
+  &RPG1R,
+  &RPA14R,
+#else
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#endif
+#if ((PIC32_PIN_COUNT != 100) && (PIC32_PIN_COUNT != 64))
+  &RPD6R,
+#else
+  NULL,
+#endif
+  NULL,
+
+  &RPD3R,
+  &RPG7R,
+  &RPF5R,
+  &RPD11R,
+  &RPF0R,
+  &RPB1R,
+  &RPE5R,
+  &RPC13R,
+  &RPB3R,
+  NULL,
+#if (PIC32_PIN_COUNT != 64)
+  &RPC4R,
+  &RPD15R,
+  &RPG0R,
+  &RPA15R,
+#else
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#endif
+#if ((PIC32_PIN_COUNT != 100) && (PIC32_PIN_COUNT != 64))
+  &RPD7R,
+#else
+  NULL,
+#endif
+  NULL,
+
+  &RPD9R,
+  &RPG6R,
+  &RPB8R,
+  &RPB15R,
+  &RPD4R,
+  &RPB0R,
+  &RPE3R,
+  &RPB7R,
+  NULL,
+#if (PIC32_PIN_COUNT != 64)
+  &RPF12R,
+  &RPD12R,
+  &RPF8R,
+  &RPC3R,
+  &RPE9R,
+#else
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+
+#endif
+  NULL,
+  NULL,
+
+  &RPD1R,
+  &RPG9R,
+  &RPB14R,
+  &RPD0R,
+  NULL,
+  &RPB6R,
+  &RPD5R,
+  &RPB2R,
+  &RPF3R,
+#if (PIC32_PIN_COUNT != 64)
+  &RPF13R,
+  NULL,
+  &RPF2R,
+  &RPC2R,
+  &RPE8R,
+#else
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+#endif
+  NULL,
+  NULL,
+};
+
+static pic32_gpio_port_t getportnumber(pic32_pin_t nbr)
+{
+
+#if ((PIC32_PIN_COUNT != 64) && (PIC32_PIN_COUNT != 100) && (PIC32_PIN_COUNT != 124))
+  if (nbr >= (int)PIC32_BASE_PORTK)
+  {
+    return PIC32_PORTK;    
+  }
+#endif
+
+#if ((PIC32_PIN_COUNT != 64) && (PIC32_PIN_COUNT != 100))
+  if (nbr >= (int)PIC32_BASE_PORTJ)
+  {
+    return PIC32_PORTJ;
+  }
+  if (nbr >= (int)PIC32_BASE_PORTH)
+  {
+    return PIC32_PORTH;
+  }
+#endif
+
+  if (nbr >= (int)PIC32_BASE_PORTG)
+  {
+    return PIC32_PORTG;
+  }
+  if (nbr >= (int)PIC32_BASE_PORTF)
+  {
+    return PIC32_PORTF;
+  }
+  if (nbr >= (int)PIC32_BASE_PORTE)
+  {
+    return PIC32_PORTE;
+  }
+  if (nbr >= (int)PIC32_BASE_PORTD)
+  {
+    return PIC32_PORTD;
+  }
+  if (nbr >= (int)PIC32_BASE_PORTC)
+  {
+    return PIC32_PORTC;
+  }
+  if (nbr >= (int)PIC32_BASE_PORTB)
+  {
+    return PIC32_PORTB;
+  }
+
+#if (PIC32_PIN_COUNT != 64)
+  if (nbr >= (int)PIC32_BASE_PORTA)
+  {
+    return PIC32_PORTA;
+  }
+#endif
+  return -1;
+}
+// This is not Impliemented, fetch the port number everytime, make it easy, like 
+// one shift or one operation only to get the port number.
+
+int gpio_output_map_set(int reg_index, uint8_t value)
+{
+  is_regindex_valid(reg_index);
+  *output_map_register[reg_index] = value;
+  return OK;
+}
+
 void gpio_output_set(pic32_gpio_port_t port, pic32_pin_t nbr)
 {
+  //int prt = getportnumber(port);
   BIT_CLR(gpio_tris[port], nbr);
 }
 void gpio_input_set(pic32_gpio_port_t port, pic32_pin_t nbr)

@@ -7,6 +7,8 @@
 #include "uart.h"
 #include "sysclk.h"
 #include "gpio.h"
+#include "uart.h"
+#include "delay.h"
 
 // This define is to set the  µC to run on internal clock
 
@@ -87,58 +89,7 @@
 #pragma config TSEQ =       0x0000
 #pragma config CSEQ =       0xffff
 
-
-
-#define MS_SCALE    (100000)  /* Calculated for a 200MHz system */
-/* Convert milliseconds to core timer ticks */
-#define MS2TICKS(T) ((T) * MS_SCALE) 
-
 static unsigned int volatile global_tick = 0;
-
-/**
- * @brief Read current core timer, used to create delays
- *
- * @Note This exactly same as the _CP0_SET_COUNT(c) and _CP0_GET_COUN()
- * they set and get current tick from the co-processor in the mips processor.
- */
-static uint32_t readcoretimer(void)
-{
-  volatile uint32_t timer;
-  
-  asm volatile("mfc0   %0, $9" : "=r"(timer));
-  
-  return timer;
-}
-
-static void setcoretime(volatile uint32_t count)
-{
-  asm volatile("mtc0    %0, $9" : :"r"(count));
-}
-
-/* Same as delay_us uses inline assembly for showing purposes */
-void delay_us_2(uint32_t us)
-{
-  us *= SYS_FREQ / 1000000 / 2; //Core timer updates every 2 ticks
-  setcoretime(0);
-
-  while (us > readcoretimer());
-}
-
- void __attribute__((unused)) delay_us(uint32_t us) 
-{
-  us *= SYS_FREQ / 1000000 / 2; //Core timer updates every 2 ticks
-
-  _CP0_SET_COUNT(0); // Set core timer count to 0
-
-  while (us > _CP0_GET_COUNT());
-}
-
-void delay_ms(uint32_t ms)
-{
-  delay_us_2(1000 * ms);
-}
-
-
 
 void print_str4(char *s)
 {
@@ -168,33 +119,6 @@ char read_char4(void)
   return 0;
 }
 
-// initialize timer. timers are ticked with the PBCLK3. the Value in TMR is compared
-// PR (Period Register)
-void init_timer2(int period)
-{
-  T2CON = 0x0; // disable timer 2
-  TMR2 = 0; // Timer counter
-
-  IEC0bits.T2IE = 0; //disable timer 2 interrupt
-  T2CONbits.TCKPS = 0b011; // prescale 8
-
-  // To get 1khz from 100 MHz the value of PR should be 100000 > 65535, we use a prescaler
-  // of 8, we check if it is available for timer 2
-  uint32_t tmr_clk = sysclk_timerfreq_get();
-
-  PR2 = tmr_clk / period / 8;
-
-
-  IFS0bits.T2IF = 0; //clear flag
-  IPC2bits.T2IP = 3; // periority 3
-  IPC2bits.T2IS = 1; // sub-periority 1
-  IEC0bits.T2IE = 1; // enable interrupt
-
-  T2CONbits.TON  = 1; // turnon
-
-
-}
-
 void init_timer1(int freq)
 {
   T1CON = 0x0;
@@ -219,11 +143,6 @@ void init_timer1(int freq)
 // other options may use the shadow registers, MIPS32 M4k core has a set of shadow registers
 // for each level of periority these can be set, in the PIC32MZ with the PRISS 
 // PRIORITY SHADOW SELECT REGISTER, note that the MVEC bit in INTCON should be active
-void __attribute__((vector(_TIMER_2_VECTOR), interrupt(ipl3AUTO), nomips16)) _timer2_interrupt(void)
-{
-  IFS0bits.T2IF = 0;
-  global_tick+=1;
-}
 
 void __attribute__((vector(_TIMER_1_VECTOR), interrupt(ipl3AUTO), nomips16)) _timer1_interrupt(void)
 {

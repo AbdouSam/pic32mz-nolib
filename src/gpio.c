@@ -16,16 +16,7 @@
   #error "Pin Count Inavailable in this series"
 #endif
 
-#define INPUT_PIN_NC       0xFF
-#define GPIO_MAP_REG_MAX (PIC32_MAX_PORT_PIN * 4U) 
-
-#define PIC32_PIN_MAP_SELCTION_GROUP_1 0
-#define PIC32_PIN_MAP_SELCTION_GROUP_2 1
-#define PIC32_PIN_MAP_SELCTION_GROUP_3 2
-#define PIC32_PIN_MAP_SELCTION_GROUP_4 3
-
 #define is_regindex_valid(x) if (x > GPIO_MAP_REG_MAX) return (ERRMAX)
-
 
 static const uint32_t ports_direction[] =
 {
@@ -476,65 +467,15 @@ static uint32_t volatile  * const output_map_register[] = {
   NULL,
 };
 
-static pic32_gpio_port_t getportnumber(pic32_pin_t pin)
+static inline pic32_gpio_port_t getportnumber(pic32_pin_t pin)
 {
-
-#if ((PIC32_PIN_COUNT != 64) && (PIC32_PIN_COUNT != 100) && (PIC32_PIN_COUNT != 124))
-  if (pin >= (int)PIC32_BASE_PORTK)
-  {
-    return PIC32_PORTK;    
-  }
-#endif
-
-#if ((PIC32_PIN_COUNT != 64) && (PIC32_PIN_COUNT != 100))
-  if (pin >= (int)PIC32_BASE_PORTJ)
-  {
-    return PIC32_PORTJ;
-  }
-  if (pin >= (int)PIC32_BASE_PORTH)
-  {
-    return PIC32_PORTH;
-  }
-#endif
-
-  if (pin >= (int)PIC32_BASE_PORTG)
-  {
-    return PIC32_PORTG;
-  }
-  if (pin >= (int)PIC32_BASE_PORTF)
-  {
-    return PIC32_PORTF;
-  }
-  if (pin >= (int)PIC32_BASE_PORTE)
-  {
-    return PIC32_PORTE;
-  }
-  if (pin >= (int)PIC32_BASE_PORTD)
-  {
-    return PIC32_PORTD;
-  }
-  if (pin >= (int)PIC32_BASE_PORTC)
-  {
-    return PIC32_PORTC;
-  }
-  if (pin >= (int)PIC32_BASE_PORTB)
-  {
-    return PIC32_PORTB;
-  }
-
-#if (PIC32_PIN_COUNT != 64)
-  if (pin >= (int)PIC32_BASE_PORTA)
-  {
-    return PIC32_PORTA;
-  }
-#endif
-  return -1;
+  return (pin / PIC32_MAX_PORT_PIN);
 }
 
-int gpio_output_map_set(int reg_index, uint8_t value)
+int gpio_outfunc_map_set(int func_index, uint8_t value)
 {
-  is_regindex_valid(reg_index);
-  *output_map_register[reg_index] = value;
+  is_regindex_valid(func_index);
+  *output_map_register[func_index] = value;
   return OK;
 }
 
@@ -582,6 +523,21 @@ bool gpio_state_get(pic32_pin_t pin)
   pin = pin - (port * PIC32_MAX_PORT_PIN);
 
   return !((*gpio_port[port] & ~(1 << pin)) == 0);
+}
+
+int gpio_map_getindex(pic32_pin_t pin)
+{
+  int i;
+
+  for (i = 0; i < GPIO_MAP_REG_MAX; i++)
+  {
+    if (pin == pin_map[i])
+    {
+      return i;
+    }
+
+  }
+  return INPUT_PIN_NC;
 }
 
 void gpio_init(void)

@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <xc.h>
-#include "pic32_hal_config.h"
+#include "pic32_config.h"
 
 #define IFSbits_TIF(x, y) IFS##y##bits.T##x##IF
 
@@ -18,8 +18,6 @@
 #define ipl(x) ipl##x##AUTO
 
 uint32_t global_tick = 0;
-
-
 
 void __attribute__((vector(_TIMER_1_VECTOR), interrupt(ipltmr1AUTO), nomips16)) _timer1_interrupt(void)
 {
@@ -105,3 +103,19 @@ void void __attribute__((vector(_TIMER_9_VECTOR), interrupt(ipltmr9AUTO), nomips
   timer_9_callback();
 }
 #endif
+
+
+void interrupt_init(void)
+{
+  // enable interrupts
+    
+  INTCONbits.MVEC = 1; // this enables the multi Vectored interrupt to tell the microprocessor
+  // to allow different handlers for each different type of interrupt (timer2, timer 3)
+
+  asm volatile("ei");
+}
+
+uint32_t interrupt_tick_get(void)
+{
+  return global_tick;
+}

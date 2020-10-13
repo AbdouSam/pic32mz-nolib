@@ -1,7 +1,6 @@
 #ifndef MICROPY_INCLUDED_PIC32BIT_CONFIG_H
 #define MICROPY_INCLUDED_PIC32BIT_BOARD_H
 
-
 //64, 100, 124, 144 
 #define PIC32_PIN_COUNT 144
 
@@ -175,6 +174,7 @@
 #endif // 64 && 100
 
 // TIMERS
+
 #define TIMER_2_ENABLED (0)
 #define TIMER_3_ENABLED (0)
 #define TIMER_4_ENABLED (0)
@@ -203,22 +203,10 @@
 #define PIC32_UART_5_ENABLED (0)
 #define PIC32_UART_6_ENABLED (0)
 
-// Pin Function mapping
-// These info is got from the datasheet of the mcu under
-// I/O Ports-> Peripheral Pin Select : Input and Output Pin Selections
+// Pin mapping (from Datasheet)
 
-// For my board i have uart4 rx -> Pin B14, tx->Pin F12
-#define PIC32_UART_4_RXR    U4RXR
-#define PIC32_UART_4_RX_MAP (0b0010) // Pin RPB14
-
-#define PIC32_UART_4_TXR    RPF12R
-#define PIC32_UART_4_TX_MAP (0b0010) // Func U4TX
-
-#define PIC32_UART_4_RX_PORT PIC32_PORTB
-#define PIC32_UART_4_RX_PIN  14
-
-#define PIC32_UART_4_TX_PORT PIC32_PORTF
-#define PIC32_UART_4_TX_PIN  12
+#define PIC32_UART_4_RX_PIN  pinB14
+#define PIC32_UART_4_TX_PIN  pinF12
 
 #define UART_ATTACHED_TO_REPL PIC32_UART_4
 

@@ -48,7 +48,7 @@ void sysclk_init(void)
   PB8DIVbits.ON = 1; 
 
   // PRECON - Set up prefetch
-  PRECONbits.PFMSECEN = 0; // Flash SEC Interrrupt Enable ( Do not generate interrupt when PFMSECbit is set)
+  PRECONbits.PFMSECEN = 0; // Do not generate interrupt when PFMSECbit is set
   PRECONbits.PREFEN = 0b11; // Predictive prefech Enable (for any address)
   PRECONbits.PFMWS  = 0b010; // PFM Access Time Defined in Terms of SYSCLK Wait States
 

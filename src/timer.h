@@ -3,16 +3,15 @@
 
 enum
 {
-  TIMER1,
-  TIMER2,
-  TIMER3,
-  TIMER4,
-  TIMER5,
-  TIMER6,
-  TIMER7,
-  TIMER8,
-  TIMER9,
-
+  PIC32_TIMER_1,
+  PIC32_TIMER_2,
+  PIC32_TIMER_3,
+  PIC32_TIMER_4,
+  PIC32_TIMER_5,
+  PIC32_TIMER_6,
+  PIC32_TIMER_7,
+  PIC32_TIMER_8,
+  PIC32_TIMER_9,
 };
 
 typedef enum
@@ -37,39 +36,37 @@ typedef enum
   TMR_PRESCALE_256 = 0b111,
 }timers_prescaler_t;
 
-
-
 void init_timer1(uint32_t freq, timer1_prescaler_t prescaler, uint8_t sub_periority);
 
-#if (TIMER_2_ENABLE == 1)
+#if (TIMER_2_ENABLED == 1)
 void init_timer2(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority);
 #endif
 
-#if (TIMER_3_ENABLE == 1)
+#if (TIMER_3_ENABLED == 1)
 void init_timer3(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority);
 #endif
 
-#if (TIMER_4_ENABLE == 1)
+#if (TIMER_4_ENABLED == 1)
 void init_timer4(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority);
 #endif
 
-#if (TIMER_5_ENABLE == 1)
+#if (TIMER_5_ENABLED == 1)
 void init_timer5(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority);
 #endif
 
-#if (TIMER_6_ENABLE == 1)
+#if (TIMER_6_ENABLED == 1)
 void init_timer6(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority);
 #endif
 
-#if (TIMER_7_ENABLE == 1)
+#if (TIMER_7_ENABLED == 1)
 void init_timer7(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority);
 #endif
 
-#if (TIMER_8_ENABLE == 1)
+#if (TIMER_8_ENABLED == 1)
 void init_timer8(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority);
 #endif
 
-#if (TIMER_9_ENABLE == 1)
+#if (TIMER_9_ENABLED == 1)
 void init_timer9(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority);
 #endif
 

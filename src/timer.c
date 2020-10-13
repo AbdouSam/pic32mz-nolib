@@ -1,9 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
-#include "pic32_config.h"
 #include <xc.h>
-#include "pic32_hal_config.h"
+
+#include "pic32_config.h"
 #include "timer.h"
+#include "sysclk.h"
+
 #define TCON(x) T##x##CON 
 #define TCONbits_TCKPS(x) T##x##CONbits.TCKPS
 #define TCONbits_ON(x) T##x##CONbits.ON
@@ -39,12 +41,7 @@ void init_timer1(uint32_t freq, timer1_prescaler_t prescaler, uint8_t sub_perior
   TCONbits_ON(1) = 1;
 }
 
-typedef struct 
-{
-  
-}interrupt_t;
-
-#if (TIMER_2_ENABLE == 1)
+#if (TIMER_2_ENABLED == 1)
 void init_timer2(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
@@ -68,7 +65,7 @@ void init_timer2(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 }
 #endif
 
-#if (TIMER_3_ENABLE == 1)
+#if (TIMER_3_ENABLED == 1)
 void init_timer3(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
@@ -92,7 +89,7 @@ void init_timer3(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 }
 #endif
 
-#if (TIMER_4_ENABLE == 1)
+#if (TIMER_4_ENABLED == 1)
 void init_timer4(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
@@ -116,7 +113,7 @@ void init_timer4(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 }
 #endif
 
-#if (TIMER_5_ENABLE == 1)
+#if (TIMER_5_ENABLED == 1)
 void init_timer5(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
@@ -140,7 +137,7 @@ void init_timer5(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 }
 #endif
 
-#if (TIMER_6_ENABLE == 1)
+#if (TIMER_6_ENABLED == 1)
 void init_timer6(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
@@ -164,7 +161,7 @@ void init_timer6(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 }
 #endif
 
-#if (TIMER_7_ENABLE == 1)
+#if (TIMER_7_ENABLED == 1)
 void init_timer7(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
@@ -188,7 +185,7 @@ void init_timer7(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 }
 #endif
 
-#if (TIMER_8_ENABLE == 1)
+#if (TIMER_8_ENABLED == 1)
 void init_timer8(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
@@ -212,7 +209,7 @@ void init_timer8(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 }
 #endif
 
-#if (TIMER_9_ENABLE == 1)
+#if (TIMER_9_ENABLED == 1)
 void init_timer9(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();

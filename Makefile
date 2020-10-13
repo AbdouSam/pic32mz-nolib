@@ -15,12 +15,14 @@ CSRCS = main.c \
         gpio.c \
         sysclk.c \
         delay.c \
+        timer.c \
+        interrupt.c \
 
 SRC_C = $(addprefix $(SRC_DIR)/, $(CSRCS))
 OBJS  = $(addprefix $(OBJ_DIR)/, $(CSRCS:.c=.o))
 
 CFLAGS = -mprocessor=$(MCU)
-CFLAGS += $(INC) -std=gnu99 -O1 -Wfatal-errors -Winline -Wall -no-legacy-libc -finline
+CFLAGS += $(INC_DIR) -std=gnu99 -O1 -Wfatal-errors -Winline -Wall -no-legacy-libc -finline
 
 MIN_HEAP_SIZE = 0
 MIN_STACK_SIZE = 0x400

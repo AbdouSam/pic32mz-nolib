@@ -9,8 +9,12 @@
 #include "gpio.h"
 #include "uart.h"
 #include "delay.h"
+#include "timer.h"
+#include "interrupt.h"
 
 // This define is to set the  µC to run on internal clock
+// config is set to run CPU at 200 Mhz,
+// with internal or 24Mhz external clock
 
 //#define CONFIG_CPU_USE_FRC
 
@@ -89,7 +93,7 @@
 #pragma config TSEQ =       0x0000
 #pragma config CSEQ =       0xffff
 
-static unsigned int volatile global_tick = 0;
+extern unsigned int global_tick;
 
 void print_str4(char *s)
 {
@@ -119,39 +123,11 @@ char read_char4(void)
   return 0;
 }
 
-void init_timer1(int freq)
-{
-  T1CON = 0x0;
-  TMR1 = 0;
-
-  IEC0bits.T1IE = 0;
-
-  PR1 = SYS_FREQ / 5 / freq;
-
-  IFS0bits.T1IF = 0;
-  IPC1bits.T1IP = 3;
-  IPC1bits.T1IS = 1;
-  IEC0bits.T1IE = 1;
-
-  T1CONbits.TON = 1;
-}
-
-//the next routine or the call for the interrupt tells the compiler to set
-// ipl3soft, interrupt periority level 3, to use a software context swtiching, 
-// or manually save all 32 GPR or only the necessary ones, into the stack and
-// retreive them once we return from the interrupt
-// other options may use the shadow registers, MIPS32 M4k core has a set of shadow registers
-// for each level of periority these can be set, in the PIC32MZ with the PRISS 
-// PRIORITY SHADOW SELECT REGISTER, note that the MVEC bit in INTCON should be active
-
-void __attribute__((vector(_TIMER_1_VECTOR), interrupt(ipl3AUTO), nomips16)) _timer1_interrupt(void)
-{
-  IFS0bits.T1IF = 0;
-  global_tick+=1;
-}
 
 int main(void)
 {
+  char c;
+  unsigned int millis = interrupt_tick_get();
 
   sysclk_init();
 
@@ -166,26 +142,36 @@ int main(void)
   gpio_state_set(pinB13, true);
   // For the interrupt
 
-  INTCONbits.MVEC = 1; // this enables the multi Vectored interrupt to tell the microprocessor
-  // to allow different handlers for each different type of interrupt (timer2, timer 3)
-  init_timer1(1000);
+  init_timer1(1000, TMR_PRESCALE_1, 0);
+
+  interrupt_init();
 
   delay_ms(1000);
 
   UART4_init(115200);
 
-  unsigned int millis = global_tick;
 
   for (;; )
     {
 
-      if (global_tick - millis >= 1000)
+      if (interrupt_tick_get() - millis >= 1000)
       {
         gpio_state_toggle(pinB12);
         gpio_state_toggle(pinB13);
 
 
-        millis = global_tick;
+        millis = interrupt_tick_get();
+      }
+
+      c = read_char4();
+
+      if (c == 'x')
+      {
+        print_str4("X is pressed.\n");
+      }
+      else if (c == '\n')
+      {
+        print_str4("Line Feed.\n");
       }
     }
 

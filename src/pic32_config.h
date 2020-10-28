@@ -4,6 +4,13 @@
 //64, 100, 124, 144 
 #define PIC32_PIN_COUNT 144
 
+/**
+ * These defines, sets the initial config of the MCU
+ * @Notes : 
+ * - Any alternate function, such as UART, SPI or similair, will override the
+ *   GPIO config
+ */
+
 // GPIO: INPUT, OUTPUT
 
 #if (PIC32_PIN_COUNT != 64)

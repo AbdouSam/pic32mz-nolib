@@ -9,6 +9,7 @@ BIN_DIR = build/release
 SRC_DIR = src
 LD_DIR  = scripts
 LD_FILE = generic_pic32mz.ld
+CFG_FILE = pic32_config.h
 
 CSRCS = main.c \
         uart.c \
@@ -45,7 +46,7 @@ $(BIN_DIR)/firmware.elf: $(OBJS)
 	@echo "LINK $@"
 	@$(CROSS_COMPILE)gcc $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/$(CFG_FILE)
 	@echo "Compile $< to get $@"
 	@$(CROSS_COMPILE)gcc -c -x c $(CFLAGS) $< -o $@  $(LIBS)
 

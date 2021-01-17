@@ -95,6 +95,21 @@
 
 extern unsigned int global_tick;
 
+void wdt_clear(void)
+{
+    volatile uint16_t * wdtclrkey;
+
+    // get address of upper 16-bit word of the WDTCON SFR
+    wdtclrkey = ( (volatile uint16_t *)&WDTCON ) + 1;
+    *wdtclrkey = 0x5743;
+
+  // This doesn't work, since it is a 32-bit wide write, not the 16-bit write required.
+  //_SFR_FIELD_WRITE(_WDT_TIMER_CLEAR_KEY_VREG(index),
+  //                 _WDT_TIMER_CLEAR_KEY_MASK(index),
+  //                 _WDT_TIMER_CLEAR_KEY_POS(index) ,
+  //                 0x5743                          );
+}
+
 void print_str4(char *s)
 {
   while ( *s != '\0')
@@ -173,6 +188,7 @@ int main(void)
       {
         print_str4("Line Feed.\n");
       }
+      wdt_clear();
     }
 
   return 0;

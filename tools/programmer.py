@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """Implementation of Microchip's AN1388 on Linux using UART/UDP"""
 
 from __future__ import print_function
@@ -10,7 +11,10 @@ from binascii import hexlify, unhexlify
 from abc import ABCMeta, abstractmethod
 
 import socket
-import serial
+try:
+    import serial
+except:
+    print("Warning: Serial package not installed.")
 
 __author__ = "Camil Staps, V Govorovski, A Abdellah"
 __copyright__ = "Copyright 2015, Camil Staps"
@@ -48,13 +52,14 @@ class DataStream:
         if DEBUG_LEVEL >= 2:
             print('<', hexlify(response))
 
-        if response[0] != b'\x01' or response[-1] != b'\x04':
+        #if response[0] != b'\x01' or response[-1] != b'\x04':
+        if response[0] != 0x01 or response[-1] != 0x04:
             raise IOError('Invalid response from bootloader')
 
         response = unescape(response[1:-1])
 
         # Verify SOH, EOT and command fields
-        if response[0] != command:
+        if response[0] != int(hexlify(command)):
             raise IOError('Unexpected response type from bootloader')
         if crc16(response[:-2]) != response[-2:]:
             raise IOError('Invalid CRC from bootloader')
@@ -116,13 +121,13 @@ class UARTStream(DataStream):
         response = ''
 
         while len(response) < 4 \
-              or response[-1] != b'\x04' or response[-2] == b'\x10':
+              or response[-1] != 0x04 or response[-2] == 0x10:
 
             byte = self.ser.read(1)
 
             if len(byte) == 0:
                 raise IOError('Bootloader response timed out')
-            if byte == b'\x01' or len(response) > 0:
+            if byte == 0x01 or len(response) > 0:
                 response += byte
 
         return response
@@ -250,15 +255,15 @@ def escape(data):
 def unescape(data):
     """Inverse of escape"""
     escaping = False
-    record = ''
+    record = b''
     for byte in list(data):
         if escaping:
-            record += byte
+            record += unhexlify(hex(byte)[2:].zfill(2))
             escaping = False
-        elif byte == b'\x10':
+        elif byte == 0x10:
             escaping = True
         else:
-            record += byte
+            record += unhexlify(hex(byte)[2:].zfill(2))
     return record
 
 def upload(conn_stream, filename):
@@ -319,7 +324,8 @@ def main():
         print('Querying..')
         conn_stream.send_request(b'\x01')
         version = conn_stream.read_response(b'\x01')
-        print('Bootloader version: ' + hexlify(version))
+        version = list(version)
+        print('Bootloader version: ' + str(version[1]) + '.' + str(version[0]))
 
     if args.erase:
         print('Erasing..')
@@ -340,7 +346,9 @@ def main():
         conn_stream.send_request(
             b'\x04' + unhexlify(addr)[::-1] + unhexlify(size)[::-1])
         checksum = conn_stream.read_response(b'\x04')
-        print('CRC @%s[%s]: %s' % (addr, size, hexlify(checksum)))
+        checksum = hex(checksum[0])[2:] + hex(checksum[1])[2:]
+
+        print('CRC @%s[%s]: %s' % (addr, size, checksum))
 
     if args.run:
         print('Running application..')

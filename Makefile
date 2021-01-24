@@ -18,6 +18,8 @@ CSRCS = main.c \
         delay.c \
         timer.c \
         interrupt.c \
+        i2c.c \
+        rtc.c \
 
 SRC_C = $(addprefix $(SRC_DIR)/, $(CSRCS))
 OBJS  = $(addprefix $(OBJ_DIR)/, $(CSRCS:.c=.o))

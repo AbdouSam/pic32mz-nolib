@@ -11,6 +11,8 @@
 #include "delay.h"
 #include "timer.h"
 #include "interrupt.h"
+#include "i2c.h"
+#include "rtc.h"
 
 // This define is to set the  µC to run on internal clock
 // config is set to run CPU at 200 Mhz,
@@ -142,6 +144,7 @@ char read_char4(void)
 int main(void)
 {
   char c;
+  unsigned char value[7];
   unsigned int millis = interrupt_tick_get();
 
   sysclk_init();
@@ -165,7 +168,10 @@ int main(void)
 
   UART4_init(115200);
 
+  i2c_init(100000);
 
+  rtc_init();
+  
   for (;; )
     {
 
@@ -176,6 +182,7 @@ int main(void)
 
 
         millis = interrupt_tick_get();
+        rtc_read_time(value);
       }
 
       c = read_char4();

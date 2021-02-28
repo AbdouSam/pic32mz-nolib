@@ -144,6 +144,7 @@ void interrupt_init(void)
 
   INTCONbits.MVEC = 1; /* this enables the multi Vectored interrupt to tell the
                         * microprocessor */
+
   /* to allow different handlers for each different type of interrupt (timer2,
    * timer 3) */
 

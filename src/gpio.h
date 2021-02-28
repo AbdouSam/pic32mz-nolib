@@ -1,9 +1,6 @@
 #ifndef MICROPY_INCLUDED_PIC32_GPIO_H
 #define MICROPY_INCLUDED_PIC32_GPIO_H
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #define PIC32_MAX_PORT_PIN  (16U)
 #define GPIO_MAP_REG_MAX    (PIC32_MAX_PORT_PIN * 4U)
 #define INPUT_PIN_NC        (0xFFU)
@@ -236,4 +233,6 @@ void gpio_state_toggle(pic32_pin_t nbr);
 int gpio_outfunc_map_set(int func_index, uint8_t value);
 int gpio_map_getindex(pic32_pin_t pin);
 
+bool gpio_isinput(pic32_pin_t pin);
+bool gpio_isoutput(pic32_pin_t pin);
 #endif /* MICROPY_INCLUDED_PIC32_GPIO_H */

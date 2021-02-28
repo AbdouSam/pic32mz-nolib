@@ -1,8 +1,21 @@
-#include "gpio.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <assert.h>
+
 #include "helpers.h"
-#include <xc.h>
+
 #include "pic32_config.h"
 #include "error.h"
+
+#ifndef TEST
+#include <xc.h>
+#else
+#include <stddef.h>
+#include "xc_stub.h"
+#endif
+
+#include "gpio.h"
+
 
 #if (PIC32_PIN_COUNT == 64)
 # define PIC32_PORT_COUNT   6
@@ -471,7 +484,11 @@ static uint32_t volatile  * const   output_map_register[] = {
 
 static inline pic32_gpio_port_t getportnumber(pic32_pin_t pin)
 {
-  return pin / PIC32_MAX_PORT_PIN;
+  pic32_gpio_port_t port = pin / (uint32_t)PIC32_MAX_PORT_PIN;
+
+  assert(port < PIC32_PORT_MAX);
+
+  return port;
 }
 
 int gpio_outfunc_map_set(int func_index, uint8_t value)
@@ -530,7 +547,21 @@ bool gpio_state_get(pic32_pin_t pin)
 
   pin = pin - (port * PIC32_MAX_PORT_PIN);
 
-  return !((*gpio_port[port] & ~(1 << pin)) == 0);
+  return !((*gpio_port[port] & (1 << pin)) == 0);
+}
+
+bool gpio_isinput(pic32_pin_t pin)
+{
+  pic32_gpio_port_t port = getportnumber(pin);
+
+  pin = pin - (port * PIC32_MAX_PORT_PIN);
+
+  return !((*gpio_tris[port] & (1 << pin)) == 0);
+}
+
+bool gpio_isoutput(pic32_pin_t pin)
+{
+  return !gpio_isinput(pin);
 }
 
 int gpio_map_getindex(pic32_pin_t pin)

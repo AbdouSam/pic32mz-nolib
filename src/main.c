@@ -104,15 +104,9 @@ void wdt_clear(void)
     // get address of upper 16-bit word of the WDTCON SFR
     wdtclrkey = ( (volatile uint16_t *)&WDTCON ) + 1;
     *wdtclrkey = 0x5743;
-
-  // This doesn't work, since it is a 32-bit wide write, not the 16-bit write required.
-  //_SFR_FIELD_WRITE(_WDT_TIMER_CLEAR_KEY_VREG(index),
-  //                 _WDT_TIMER_CLEAR_KEY_MASK(index),
-  //                 _WDT_TIMER_CLEAR_KEY_POS(index) ,
-  //                 0x5743                          );
 }
 
-void print_str4(char *s)
+static void print_str(const char *s)
 {
   while ( *s != '\0')
   {
@@ -120,18 +114,7 @@ void print_str4(char *s)
   }
 }
 
-void UART4_init(int baud_rate)
-{
-  // Set rs485 bit to output
-  gpio_state_set(pinA10, true);
-  
-  init_uart(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, baud_rate);
-
-  print_str4("Hello UART \n");
-}
-
-
-char read_char4(void)
+static char read_char(void)
 {
   if (uart_rx_any(PIC32_UART_4)) // Data ready
   {
@@ -150,14 +133,11 @@ int main(void)
   sysclk_init();
 
   gpio_init();
-  /*
-  ANSELB = 0; // PIC starts all pins as analog, needs to be deactivated to be used
-  TRISBCLR = 1 << 13; //set bit 13 port B to output
-  TRISBCLR = 1 << 12; //set bit 12 port B to output
-  */
+
 
   gpio_state_set(pinB12, true);
   gpio_state_set(pinB13, true);
+
   // For the interrupt
 
   init_timer1(1000, TMR_PRESCALE_1, 0);
@@ -166,7 +146,12 @@ int main(void)
 
   delay_ms(1000);
 
-  UART4_init(115200);
+  // Set rs485 bit to output (for the board we use a max485 to interface uart)
+  gpio_state_set(pinA10, true);
+  
+  init_uart(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
+
+  print_str("Hello World\n");
 
   i2c_init(100000);
 
@@ -177,23 +162,27 @@ int main(void)
 
       if (interrupt_tick_get() - millis >= 1000)
       {
+        /* test timer/interrupt/gpio */
         gpio_state_toggle(pinB12);
         gpio_state_toggle(pinB13);
 
 
         millis = interrupt_tick_get();
+
+        /* test read rtc/ i2c */
         rtc_read_time(value);
       }
 
-      c = read_char4();
+      /* test read the uart */
+      c = read_char();
 
       if (c == 'x')
       {
-        print_str4("X is pressed.\n");
+        print_str("X is pressed.\n");
       }
       else if (c == '\n')
       {
-        print_str4("Line Feed.\n");
+        print_str("Line Feed.\n");
       }
       wdt_clear();
     }

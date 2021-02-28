@@ -59,6 +59,10 @@ clean:
 	@rm -f $(BIN_DIR)/firmware.hex $(BIN_DIR)/firmware.elf $(BIN_DIR)/firmware.map
 	@echo "Cleanup complete."
 
+# watchout, this routine uncrustify all files in src directory
+uncrustify:
+	@uncrustify -c uncrustify.cfg --no-backup src/* --suffix
+
 test:
 	@echo "src files: $(SRC_C)"
 	@echo "obj files:  $(OBJS)"

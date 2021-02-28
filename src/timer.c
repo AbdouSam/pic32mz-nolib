@@ -6,20 +6,25 @@
 #include "timer.h"
 #include "sysclk.h"
 
-#define TCON(x) T##x##CON 
-#define TCONbits_TCKPS(x) T##x##CONbits.TCKPS
-#define TCONbits_ON(x) T##x##CONbits.ON
-#define IECbits_TIE(x, y) IEC##y##bits.T##x##IE
-#define IFSbits_TIF(x, y) IFS##y##bits.T##x##IF
-#define IPCbits_TIP(x, y) IPC##y##bits.T##x##IP
-#define IPCbits_TIS(x, y) IPC##y##bits.T##x##IS
-#define PR(x) PR##x
-#define TMR(x) TMR##x
+#define TCON(x)             T ## x ## CON
+#define TCONbits_TCKPS(x)   T ## x ## CONbits.TCKPS
+#define TCONbits_ON(x)      T ## x ## CONbits.ON
+#define IECbits_TIE(x, y)   IEC ## y ## bits.T ## x ## IE
+#define IFSbits_TIF(x, y)   IFS ## y ## bits.T ## x ## IF
+#define IPCbits_TIP(x, y)   IPC ## y ## bits.T ## x ## IP
+#define IPCbits_TIS(x, y)   IPC ## y ## bits.T ## x ## IS
+#define PR(x)               PR ## x
+#define TMR(x)              TMR ## x
 
-static uint16_t tmr1_prescale_value[] = {1, 8, 64, 256};
-static uint16_t tmrs_prescale_value[] = {1, 2, 4, 8, 16, 32, 64, 256};
+static uint16_t tmr1_prescale_value[] = {
+  1, 8, 64, 256
+};
+static uint16_t tmrs_prescale_value[] = {
+  1, 2, 4, 8, 16, 32, 64, 256
+};
 
-void init_timer1(uint32_t freq, timer1_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer1(uint32_t freq, timer1_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -37,12 +42,12 @@ void init_timer1(uint32_t freq, timer1_prescaler_t prescaler, uint8_t sub_perior
 
   IECbits_TIE(1, 0) = 1;
 
-
   TCONbits_ON(1) = 1;
 }
 
 #if (TIMER_2_ENABLED == 1)
-void init_timer2(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer2(uint32_t freq, timers_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -60,13 +65,14 @@ void init_timer2(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 
   IECbits_TIE(2, 0) = 1;
 
-
   TCONbits_ON(2) = 1;
 }
+
 #endif
 
 #if (TIMER_3_ENABLED == 1)
-void init_timer3(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer3(uint32_t freq, timers_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -84,13 +90,14 @@ void init_timer3(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 
   IECbits_TIE(3, 0) = 1;
 
-
   TCONbits_ON(3) = 1;
 }
+
 #endif
 
 #if (TIMER_4_ENABLED == 1)
-void init_timer4(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer4(uint32_t freq, timers_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -108,13 +115,14 @@ void init_timer4(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 
   IECbits_TIE(4, 0) = 1;
 
-
   TCONbits_ON(4) = 1;
 }
+
 #endif
 
 #if (TIMER_5_ENABLED == 1)
-void init_timer5(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer5(uint32_t freq, timers_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -132,13 +140,14 @@ void init_timer5(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 
   IECbits_TIE(5, 0) = 1;
 
-
   TCONbits_ON(5) = 1;
 }
+
 #endif
 
 #if (TIMER_6_ENABLED == 1)
-void init_timer6(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer6(uint32_t freq, timers_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -156,13 +165,14 @@ void init_timer6(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 
   IECbits_TIE(6, 0) = 1;
 
-
   TCONbits_ON(6) = 1;
 }
+
 #endif
 
 #if (TIMER_7_ENABLED == 1)
-void init_timer7(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer7(uint32_t freq, timers_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -180,13 +190,14 @@ void init_timer7(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 
   IECbits_TIE(7, 1) = 1;
 
-
   TCONbits_ON(7) = 1;
 }
+
 #endif
 
 #if (TIMER_8_ENABLED == 1)
-void init_timer8(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer8(uint32_t freq, timers_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -204,13 +215,14 @@ void init_timer8(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
 
   IECbits_TIE(8, 1) = 1;
 
-
   TCONbits_ON(8) = 1;
 }
+
 #endif
 
 #if (TIMER_9_ENABLED == 1)
-void init_timer9(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_periority)
+void init_timer9(uint32_t freq, timers_prescaler_t prescaler,
+                 uint8_t sub_periority)
 {
   uint32_t tmr_clk = sysclk_timerfreq_get();
 
@@ -223,12 +235,12 @@ void init_timer9(uint32_t freq, timers_prescaler_t prescaler, uint8_t sub_perior
   PR(9) = tmr_clk / freq / tmrs_prescale_value[prescaler];
 
   IFSbits_TIF(9, 1) = 0;
-  IPCbits_TIP(9, 10) = TIMER9_INTERRUPT_PERIORITY;
-  IPCbits_TIS(9, 10) = sub_periority;
+  IPCbits_TIP(9, 10)    = TIMER9_INTERRUPT_PERIORITY;
+  IPCbits_TIS(9, 10)    = sub_periority;
 
   IECbits_TIE(9, 1) = 1;
 
-
   TCONbits_ON(9) = 1;
 }
+
 #endif

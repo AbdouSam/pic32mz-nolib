@@ -14,11 +14,12 @@
 #include "i2c.h"
 #include "rtc.h"
 
-// This define is to set the  µC to run on internal clock
-// config is set to run CPU at 200 Mhz,
-// with internal or 24Mhz external clock
+/* This define is to set the  µC to run on internal clock
+ * config is set to run CPU at 200 Mhz,
+ * with internal or 24Mhz external clock
+ */
 
-//#define CONFIG_CPU_USE_FRC
+/*#define CONFIG_CPU_USE_FRC */
 
 /*** DEVCFG0 ***/
 #pragma config DEBUG =      OFF
@@ -35,7 +36,7 @@
 #pragma config POSCGAIN =   GAIN_0_5X
 #pragma config POSCBOOST =  ON
 #pragma config EJTAGBEN =   NORMAL
-#pragma config CP =         OFF // code protect
+#pragma config CP =         OFF /* code protect */
 
 /*** DEVCFG1 ***/
 
@@ -54,11 +55,11 @@
 #pragma config FCKSM =      CSECME
 #pragma config WDTPS =      PS1048576
 #pragma config WDTSPGM =    STOP
-#pragma config FWDTEN =     OFF // WatchDog timer
+#pragma config FWDTEN =     OFF /* WatchDog timer */
 #pragma config WINDIS =     NORMAL
 #pragma config FWDTWINSZ =  WINSZ_25
 #pragma config DMTCNT =     DMT31
-#pragma config FDMTEN =     OFF // Deadman timer
+#pragma config FDMTEN =     OFF /* Deadman timer */
 
 /*** DEVCFG2 ***/
 
@@ -99,46 +100,44 @@ extern unsigned int global_tick;
 
 void wdt_clear(void)
 {
-    volatile uint16_t * wdtclrkey;
+  volatile uint16_t * wdtclrkey;
 
-    // get address of upper 16-bit word of the WDTCON SFR
-    wdtclrkey = ( (volatile uint16_t *)&WDTCON ) + 1;
-    *wdtclrkey = 0x5743;
+  /* get address of upper 16-bit word of the WDTCON SFR */
+  wdtclrkey     = ( (volatile uint16_t *)&WDTCON ) + 1;
+  *wdtclrkey    = 0x5743;
 }
 
 static void print_str(const char *s)
 {
   while ( *s != '\0')
-  {
-    uart_tx_char(PIC32_UART_4, *s++);
-  }
+    {
+      uart_tx_char(PIC32_UART_4, *s++);
+    }
 }
 
 static char read_char(void)
 {
-  if (uart_rx_any(PIC32_UART_4)) // Data ready
-  {
-    return uart_rx_char(PIC32_UART_4);
-  }
+  if (uart_rx_any(PIC32_UART_4)) /* Data ready */
+    {
+      return uart_rx_char(PIC32_UART_4);
+    }
   return 0;
 }
 
-
 int main(void)
 {
-  char c;
+  char          c;
   unsigned char value[7];
-  unsigned int millis = interrupt_tick_get();
+  unsigned int  millis = interrupt_tick_get();
 
   sysclk_init();
 
   gpio_init();
 
-
   gpio_state_set(pinB12, true);
   gpio_state_set(pinB13, true);
 
-  // For the interrupt
+  /* For the interrupt */
 
   init_timer1(1000, TMR_PRESCALE_1, 0);
 
@@ -146,9 +145,9 @@ int main(void)
 
   delay_ms(1000);
 
-  // Set rs485 bit to output (for the board we use a max485 to interface uart)
+  /* Set rs485 bit to output (for the board we use a max485 to interface uart) */
   gpio_state_set(pinA10, true);
-  
+
   init_uart(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
 
   print_str("Hello World\n");
@@ -156,34 +155,33 @@ int main(void)
   i2c_init(100000);
 
   rtc_init();
-  
+
   for (;; )
     {
 
       if (interrupt_tick_get() - millis >= 1000)
-      {
-        /* test timer/interrupt/gpio */
-        gpio_state_toggle(pinB12);
-        gpio_state_toggle(pinB13);
+        {
+          /* test timer/interrupt/gpio */
+          gpio_state_toggle(pinB12);
+          gpio_state_toggle(pinB13);
 
+          millis = interrupt_tick_get();
 
-        millis = interrupt_tick_get();
-
-        /* test read rtc/ i2c */
-        rtc_read_time(value);
-      }
+          /* test read rtc/ i2c */
+          rtc_read_time(value);
+        }
 
       /* test read the uart */
       c = read_char();
 
       if (c == 'x')
-      {
-        print_str("X is pressed.\n");
-      }
+        {
+          print_str("X is pressed.\n");
+        }
       else if (c == '\n')
-      {
-        print_str("Line Feed.\n");
-      }
+        {
+          print_str("Line Feed.\n");
+        }
       wdt_clear();
     }
 

@@ -182,7 +182,7 @@
 
 /* TIMERS */
 
-#define TIMER_2_ENABLED             (0)
+#define TIMER_2_ENABLED             (1)
 #define TIMER_3_ENABLED             (0)
 #define TIMER_4_ENABLED             (0)
 #define TIMER_5_ENABLED             (0)

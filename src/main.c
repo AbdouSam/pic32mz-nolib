@@ -3,7 +3,11 @@
  * @brief, simplest code to test-run a PIC32MZ without any use of libraries
  *
  */
+#include <stdbool.h>
+
 #include <xc.h>
+
+#include "pic32_config.h"
 #include "uart.h"
 #include "sysclk.h"
 #include "gpio.h"
@@ -97,6 +101,7 @@
 #pragma config CSEQ =       0xffff
 
 extern unsigned int global_tick;
+static bool wdt_clear_flag = true;
 
 void wdt_clear(void)
 {
@@ -124,6 +129,13 @@ static char read_char(void)
   return 0;
 }
 
+void timer_2_callback(void)
+{
+  gpio_state_toggle(pinB13);
+  wdt_clear_flag = true;
+}
+
+
 int main(void)
 {
   char          c;
@@ -140,6 +152,9 @@ int main(void)
   /* For the interrupt */
 
   init_timer1(1000, TMR_PRESCALE_1, 0);
+
+  /* use it to clear watchdog. */
+  init_timer2(1, TMR_PRESCALE_256, 0);
 
   interrupt_init();
 
@@ -159,11 +174,10 @@ int main(void)
   for (;; )
     {
 
-      if (interrupt_tick_get() - millis >= 1000)
+      if (interrupt_tick_get() - millis >= 500)
         {
           /* test timer/interrupt/gpio */
           gpio_state_toggle(pinB12);
-          gpio_state_toggle(pinB13);
 
           millis = interrupt_tick_get();
 
@@ -182,7 +196,12 @@ int main(void)
         {
           print_str("Line Feed.\n");
         }
-      wdt_clear();
+
+      if (wdt_clear_flag)
+      {
+        wdt_clear_flag = false;
+        wdt_clear();
+      }
     }
 
   return 0;

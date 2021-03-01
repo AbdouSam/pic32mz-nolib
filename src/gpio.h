@@ -1,6 +1,9 @@
 #ifndef MICROPY_INCLUDED_PIC32_GPIO_H
 #define MICROPY_INCLUDED_PIC32_GPIO_H
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #define PIC32_MAX_PORT_PIN  (16U)
 #define GPIO_MAP_REG_MAX    (PIC32_MAX_PORT_PIN * 4U)
 #define INPUT_PIN_NC        (0xFFU)

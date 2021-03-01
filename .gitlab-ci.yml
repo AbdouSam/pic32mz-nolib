@@ -1,0 +1,16 @@
+stages:
+  - UnitTest
+  - Build
+
+Unit test:
+  stage: UnitTest
+  script:
+    - ceedling test:all
+
+Build code:
+  stage: Build
+  script:
+    - make
+  artifacts:
+    paths:
+      - build/release/firmware.hex

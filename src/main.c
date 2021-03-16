@@ -6,17 +6,12 @@
 #include <stdbool.h>
 
 #include <xc.h>
-
-#include "pic32_config.h"
-#include "uart.h"
 #include "sysclk.h"
-#include "gpio.h"
-#include "uart.h"
-#include "delay.h"
-#include "timer.h"
-#include "interrupt.h"
-#include "i2c.h"
-#include "rtc.h"
+#include"gpio.h"
+#include"delay.h"
+#include"timer.h"
+#include"interrupt.h"
+#include"pic32_config.h"
 
 /* This define is to set the  µC to run on internal clock
  * config is set to run CPU at 200 Mhz,
@@ -99,110 +94,34 @@
 
 #pragma config TSEQ =       0x0000
 #pragma config CSEQ =       0xffff
+//void timer_6_callback(void){
+ //gpio_state_toggle(pinB13);
 
-extern unsigned int global_tick;
-static bool wdt_clear_flag = true;
+//};
+/*void io0interrupt_callback(void){
+    gpio_state_toggle(pinE9);
+    delay_ms(1000);
+    };*/
 
-void wdt_clear(void)
-{
-  volatile uint16_t * wdtclrkey;
-
-  /* get address of upper 16-bit word of the WDTCON SFR */
-  wdtclrkey     = ( (volatile uint16_t *)&WDTCON ) + 1;
-  *wdtclrkey    = 0x5743;
-}
-
-static void print_str(const char *s)
-{
-  while ( *s != '\0')
-    {
-      uart_tx_char(PIC32_UART_4, *s++);
-    }
-}
-
-static char read_char(void)
-{
-  if (uart_rx_any(PIC32_UART_4)) /* Data ready */
-    {
-      return uart_rx_char(PIC32_UART_4);
-    }
-  return 0;
-}
-
-void timer_2_callback(void)
-{
-  gpio_state_toggle(pinB13);
-  wdt_clear_flag = true;
-}
-
-
-int main(void)
-{
-  char          c;
-  unsigned char value[7];
-  unsigned int  millis = interrupt_tick_get();
-
-  sysclk_init();
-
-  gpio_init();
-
-  gpio_state_set(pinB12, true);
-  gpio_state_set(pinB13, true);
-
-  /* For the interrupt */
-
-  init_timer1(1000, TMR_PRESCALE_1, 0);
-
-  /* use it to clear watchdog. */
-  init_timer2(1, TMR_PRESCALE_256, 0);
-
-  interrupt_init();
-
-  delay_ms(1000);
-
-  /* Set rs485 bit to output (we use a max485 to interface uart) */
-  gpio_state_set(pinA10, true);
-
-  init_uart(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
-
-  print_str("Hello World\n");
-
-  i2c_init(100000);
-
-  rtc_init();
-
-  for (;; )
-    {
-
-      if (interrupt_tick_get() - millis >= 500)
-        {
-          /* test timer/interrupt/gpio */
-          gpio_state_toggle(pinB12);
-
-          millis = interrupt_tick_get();
-
-          /* test read rtc/ i2c */
-          rtc_read_time(value);
-        }
-
-      /* test read the uart */
-      c = read_char();
-
-      if (c == 'x')
-        {
-          print_str("X is pressed.\n");
-        }
-      else if (c == '\n')
-        {
-          print_str("Line Feed.\n");
-        }
-
-      if (wdt_clear_flag)
-      {
-        wdt_clear_flag = false;
-        wdt_clear();
-      }
-    }
-
-  return 0;
-}
+int main(void){
+/* init */
+ sysclk_init();
+/*set IO*/
+ gpio_output_set(pinE9);
+ gpio_output_set(pinB12);
+/*configure interrupts */
+ //CNCONAbits.ON = 1;
+ //CNENAbits.CNIEA14 = 1;
+gpio_input_set(pinA14);
+gpio_set_interrupt(pinA14);
+// init_timer6(10, TMR_PRESCALE_256, 0);
+ interrupt_init();
+/* infinite loop */
+ while(true){
+     gpio_state_toggle(pinB12);
+     delay_ms(1000);
+ }
+    return 0;
+ }
+;
+  

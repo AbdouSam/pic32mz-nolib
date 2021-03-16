@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include <xc.h>
 #include "pic32_config.h"
-
+#include<sys/attribs.h>
+#include<gpio.h>
 #define IFSbits_TIF(x, y)  IFS ## y ## bits.T ## x ## IF
 
 #define ipltmr1AUTO     iplAUTO(TIMER1_INTERRUPT_PERIORITY)
@@ -13,11 +14,31 @@
 #define ipltmr7AUTO     iplAUTO(TIMER7_INTERRUPT_PERIORITY)
 #define ipltmr8AUTO     iplAUTO(TIMER8_INTERRUPT_PERIORITY)
 #define ipltmr9AUTO     iplAUTO(TIMER9_INTERRUPT_PERIORITY)
-
+//TODO define GPIO interrupt priority
+#define GPIO_INTERRUPT_PRIORITY 2
+//#define ipl2AUTO       iplAUTO(GPIO_INTERRUPT_PRIORITY)
 #define iplAUTO(x)  ipl(x)
 #define ipl(x)      ipl ## x ## AUTO
-
+volatile unsigned int oldA = 0, newA = 0;
 uint32_t global_tick = 0;
+void __ISR(_CHANGE_NOTICE_A_VECTOR, ipl2AUTO) CNISR(void){
+    newA = PORTA;
+    gpio_state_toggle(pinE9);
+    oldA = newA;
+    IFS3bits.CNAIF = 0;    
+}
+
+//void __attribute__((weak)) io0interrupt_callback(void){
+//}
+
+//void __attribute__((vector(_CHANGE_NOTICE_A_VECTOR), interrupt(iplioAUTO),
+  //          nomips16)) _io0_interrupt(void)
+//{
+  // IFS3bits.CNAIF = 0;
+   //io0interrupt_callback();
+//}
+
+            
 
 void __attribute__((vector(_TIMER_1_VECTOR), interrupt(ipltmr1AUTO),
                     nomips16)) _timer1_interrupt(void)

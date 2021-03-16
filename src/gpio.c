@@ -16,6 +16,14 @@
 
 #include "gpio.h"
 
+#define TCON(x) T ## x ## CON
+#define TCONbit_TCKPS(x) T ## x ## CONbits.TCKPS
+#define TCONbits_ON(x) T ## x ## CONbits.ON
+#define IECbits_TIE(x, y) IEC ## y ## bits.T ## x ## IE
+#define IFSbits_TIF(x, y) IFS ## y ## bits.T ## x ## IF
+#define IPCbits_TIP(x, y) IPC ## y ## bits.T ## x ## IP
+#define IPCbits_TIS(x, y) IPC ## y ## bits.T ## x ## IS
+
 
 #if (PIC32_PIN_COUNT == 64)
 # define PIC32_PORT_COUNT   6
@@ -26,7 +34,7 @@
 #elif (PIC32_PIN_COUNT == 144)
 # define PIC32_PORT_COUNT   10
 #else
-  #error "Pin Count Inavailable in this series"
+#error "Pin Count Inavailable in this series"
 #endif
 
 #define is_regindex_valid(x)  if (x > GPIO_MAP_REG_MAX)return (ERRMAX)
@@ -481,6 +489,32 @@ static uint32_t volatile  * const   output_map_register[] = {
   NULL,
   NULL,
 };
+
+void gpio_set_interrupt(pic32_pin_t pin){
+//Interrupt func
+//Turn on interrupt control registers
+IEC3bits.CNAIE = 0;
+CNCONAbits.ON = 1;
+CNENAbits.CNIEA14 = 1;
+CNENA |= (1 << 14)
+IPC29bits.CNAIP = 2;
+IPC29bits.CNAIS = 3;
+uint32_t a = PORTA;
+(void)a;
+IFS3bits.CNAIF = 0;
+//CNCONAbits.EDGEDETECT = 1;
+//read, ignore return, clear CN port
+//gpio_state_get(pin);
+//set edge for external signal interrupt
+//CNEAbits.CNIEA14 = 1;
+//CNENAbits.CNIEA14 = 1;
+    //setting external interrupt polary
+//IEC0CLR = 0x00008000; //disable interrupt
+//INTCONCLR = 0x00000008;  //clear bit for falling edge 
+//IFS0CLR = 0x00008000; //clear interrupt flag
+IEC3bits.CNAIE = 1; //reeneable interrupt
+}
+
 
 static inline pic32_gpio_port_t getportnumber(pic32_pin_t pin)
 {

@@ -186,7 +186,7 @@
 #define TIMER_3_ENABLED             (0)
 #define TIMER_4_ENABLED             (0)
 #define TIMER_5_ENABLED             (0)
-#define TIMER_6_ENABLED             (0)
+#define TIMER_6_ENABLED             (1)
 #define TIMER_7_ENABLED             (0)
 #define TIMER_8_ENABLED             (0)
 #define TIMER_9_ENABLED             (0)

@@ -226,7 +226,7 @@ typedef enum
 #endif  /* 124 */
 #endif  /* 64 && 100 */
 }pic32_pin_t;
-
+void gpio_set_interrupt(pic32_pin_t pin);
 void gpio_init(void);
 bool gpio_state_get(pic32_pin_t nbr);
 void gpio_state_set(pic32_pin_t nbr, bool state);

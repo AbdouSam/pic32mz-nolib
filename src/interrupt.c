@@ -19,26 +19,137 @@
 //#define ipl2AUTO       iplAUTO(GPIO_INTERRUPT_PRIORITY)
 #define iplAUTO(x)  ipl(x)
 #define ipl(x)      ipl ## x ## AUTO
-volatile unsigned int oldA = 0, newA = 0;
+
+#define TABLE_ENTRIES 3
+
 uint32_t global_tick = 0;
-void __ISR(_CHANGE_NOTICE_A_VECTOR, ipl2AUTO) CNISR(void){
-    newA = PORTA;
-    gpio_state_toggle(pinE9);
-    oldA = newA;
-    IFS3bits.CNAIF = 0;    
+
+volatile unsigned int oldA = 0, newA = 0, newB=0, oldB=0,
+         newC = 0, oldC = 0, newD = 0, oldD = 0,
+         newE = 0, oldE = 0, newF = 0, oldF = 0, 
+         newG = 0, oldG = 0, newH = 0, oldH = 0, 
+         newJ = 0, oldJ = 0, newK = 0, oldK = 0;         
+
+
+//Interrupt service routines for GPIO interrupts
+//User defined callback function
+void __attribute((weak)) gpio_A_callback(void)
+{
 }
 
-//void __attribute__((weak)) io0interrupt_callback(void){
-//}
+void __ISR(_CHANGE_NOTICE_A_VECTOR, ipl2AUTO) CNISRA(void){
+    newA = PORTA;    //Save current port state
+    gpio_A_callback();
+    oldA = newA;
+    CNFA = 0;             //Clear flag register
+    IFS3bits.CNAIF = 0;   //clear interrupt flag bit 
+}
 
-//void __attribute__((vector(_CHANGE_NOTICE_A_VECTOR), interrupt(iplioAUTO),
-  //          nomips16)) _io0_interrupt(void)
-//{
-  // IFS3bits.CNAIF = 0;
-   //io0interrupt_callback();
-//}
+void __attribute__((weak)) gpio_B_callback(void)
+{
+}
 
-            
+void __ISR(_CHANGE_NOTICE_B_VECTOR, ipl2AUTO) CNISRB(void){
+    newB = PORTB;                                         
+    oldB = newB;
+    gpio_B_callback();
+    CNFB = 0;
+    IFS3bits.CNBIF = 0;                                     
+}
+
+
+
+void __attribute__((weak)) gpio_C_callback(void)
+{
+}
+
+void __ISR(_CHANGE_NOTICE_C_VECTOR, ipl2AUTO) CNISRC(void){
+    newC = PORTC;                                         
+    oldC = newC;
+    gpio_C_callback();
+    CNFC = 0;
+    IFS3bits.CNCIF = 0;                                     
+}
+void __attribute__((weak)) gpio_D_callback(void)
+{
+}
+void __ISR(_CHANGE_NOTICE_D_VECTOR, ipl2AUTO) CNISRD(void){
+    newD = PORTD;                                         
+    oldD = newD;
+    gpio_D_callback();
+    CNFD = 0;
+    IFS3bits.CNDIF = 0;                                     
+}
+
+
+void __attribute__((weak)) gpio_E_callback(void)
+{
+}
+void __ISR(_CHANGE_NOTICE_E_VECTOR, ipl2AUTO) CNISRE(void){
+    newE = PORTE;                                         
+    oldE = newE;
+    gpio_E_callback();
+    CNFE = 0;
+    IFS3bits.CNEIF = 0;                                     
+}
+
+void __attribute__((weak)) gpio_F_callback(void)
+{
+}
+
+void __ISR(_CHANGE_NOTICE_F_VECTOR, ipl2AUTO) CNISRF(void){
+    newF = PORTF;                                         
+    oldF = newF;
+    gpio_F_callback();
+    CNFF = 0;
+    IFS3bits.CNFIF = 0;                                     
+}
+
+void __attribute__((weak)) gpio_G_callback(void)
+{
+}
+void __ISR(_CHANGE_NOTICE_G_VECTOR, ipl2AUTO) CNISRG(void){
+    newG = PORTG;                                         
+    oldG = newG;
+    gpio_G_callback();
+    CNFG = 0;
+    IFS3bits.CNGIF = 0;                                     
+}
+
+void __attribute__((weak)) gpio_H_callback(void)
+{
+}
+
+void __ISR(_CHANGE_NOTICE_H_VECTOR, ipl2AUTO) CNISRH(void){
+    newH = PORTH;                                         
+    oldH = newH;
+    gpio_H_callback();
+    CNFH = 0;
+    IFS3bits.CNHIF = 0;                                     
+}
+
+void __attribute__((weak)) gpio_J_callback(void)
+{
+}
+
+void __ISR(_CHANGE_NOTICE_J_VECTOR, ipl2AUTO) CNISRJ(void){
+    newJ = PORTJ;                                         
+    oldJ = newJ;
+    gpio_J_callback();
+    CNFJ = 0;
+    IFS3bits.CNJIF = 0;                                     
+}
+
+void __attribute__((weak)) gpio_K_callback(void)
+{
+}
+void __ISR(_CHANGE_NOTICE_K_VECTOR, ipl2AUTO) CNISRK(void){
+    newK = PORTK;                                         
+    oldK = newK;
+    gpio_K_callback();
+    CNFK = 0;
+    IFS3bits.CNKIF = 0;                                     
+}
 
 void __attribute__((vector(_TIMER_1_VECTOR), interrupt(ipltmr1AUTO),
                     nomips16)) _timer1_interrupt(void)

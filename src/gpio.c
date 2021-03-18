@@ -490,31 +490,30 @@ static uint32_t volatile  * const   output_map_register[] = {
   NULL,
 };
 
-void gpio_set_interrupt(pic32_pin_t pin){
-//Interrupt func
-//Turn on interrupt control registers
-IEC3bits.CNAIE = 0;
-CNCONAbits.ON = 1;
-CNENAbits.CNIEA14 = 1;
-CNENA |= (1 << 14)
-IPC29bits.CNAIP = 2;
-IPC29bits.CNAIS = 3;
-uint32_t a = PORTA;
-(void)a;
-IFS3bits.CNAIF = 0;
-//CNCONAbits.EDGEDETECT = 1;
-//read, ignore return, clear CN port
-//gpio_state_get(pin);
-//set edge for external signal interrupt
-//CNEAbits.CNIEA14 = 1;
-//CNENAbits.CNIEA14 = 1;
-    //setting external interrupt polary
-//IEC0CLR = 0x00008000; //disable interrupt
-//INTCONCLR = 0x00000008;  //clear bit for falling edge 
-//IFS0CLR = 0x00008000; //clear interrupt flag
-IEC3bits.CNAIE = 1; //reeneable interrupt
-}
+void gpio_set_interrupt_A(pic32_pin_t pin);       
+void gpio_set_interrupt_B(pic32_pin_t pin);
+void gpio_set_interrupt_C(pic32_pin_t pin);
+void gpio_set_interrupt_D(pic32_pin_t pin);
+void gpio_set_interrupt_E(pic32_pin_t pin);
+void gpio_set_interrupt_F(pic32_pin_t pin);
+void gpio_set_interrupt_G(pic32_pin_t pin);
+void gpio_set_interrupt_H(pic32_pin_t pin);
+void gpio_set_interrupt_J(pic32_pin_t pin);
+void gpio_set_interrupt_K(pic32_pin_t pin);
 
+typedef void(*set_interrupts)(pic32_pin_t pin);
+set_interrupts set_interrupt_vector[] = {
+gpio_set_interrupt_A,
+gpio_set_interrupt_B,
+gpio_set_interrupt_C,
+gpio_set_interrupt_D,
+gpio_set_interrupt_E,
+gpio_set_interrupt_F,
+gpio_set_interrupt_G,
+gpio_set_interrupt_H,
+gpio_set_interrupt_J,
+gpio_set_interrupt_K
+};
 
 static inline pic32_gpio_port_t getportnumber(pic32_pin_t pin)
 {
@@ -524,6 +523,11 @@ static inline pic32_gpio_port_t getportnumber(pic32_pin_t pin)
 
   return port;
 }
+
+static inline uint32_t getpinnumber(pic32_pin_t pin){
+pic32_gpio_port_t port = getportnumber(pin);
+return pin - ( port * PIC32_MAX_PORT_PIN); 
+}                                                            
 
 int gpio_outfunc_map_set(int func_index, uint8_t value)
 {
@@ -554,7 +558,7 @@ void gpio_state_set(pic32_pin_t pin, bool state)
 {
   pic32_gpio_port_t port = getportnumber(pin);
 
-  pin = pin - (port * PIC32_MAX_PORT_PIN);
+  pin = pin - (port * PIC32_MAX_PORT_PIN);   
 
   if (state)
     {
@@ -650,3 +654,144 @@ void gpio_init(void)
     }
 
 }
+
+
+void gpio_set_interrupt(pic32_pin_t pin){
+pic32_gpio_port_t port = getportnumber(pin);
+ (*set_interrupt_vector[port])(pin);
+}                                               
+
+void gpio_set_interrupt_A(pic32_pin_t pin){
+IEC3bits.CNAIE = 0; //Turn off interrupt for port
+CNCONAbits.ON = 1; // Turn on interrupt control register
+CNCONAbits.EDGEDETECT = 1; //Set rising edge detection register to avoid using pin mismatch
+//Treat bit shift according to pin
+CNENA |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC29bits.CNAIP = 2; //Set interrupt priority
+IPC29bits.CNAIS = 2; //Set interrupt subpriority
+//read in the general set_interrupt function
+//uint32_t a = PORTA;
+//(void)a;
+IFS3bits.CNAIF = 0; //Clear interrupt flag
+IEC3bits.CNAIE = 1; //reeneable interrupt                             
+}
+
+
+
+
+void gpio_set_interrupt_B(pic32_pin_t pin){
+
+IEC3bits.CNBIE = 0; //Turn off interrupt for port
+CNCONBbits.ON = 1; // Turn on interrupt control register
+CNCONBbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNENB |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC29bits.CNBIP = 2; //Set interrupt priority
+IPC29bits.CNBIS = 2; //Set interrupt subpriority
+IFS3bits.CNBIF = 0; //Clear interrupt flag
+IEC3bits.CNBIE = 1; //reeneable interrupt                             
+}
+
+void gpio_set_interrupt_C(pic32_pin_t pin){
+
+IEC3bits.CNCIE = 0; //Turn off interrupt for port
+CNCONCbits.ON = 1; // Turn on interrupt control register
+CNCONCbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNENC |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC30bits.CNCIP = 2; //Set interrupt priority
+IPC30bits.CNCIS = 2; //Set interrupt subpriority
+IFS3bits.CNCIF = 0; //Clear interrupt flag
+IEC3bits.CNCIE = 1; //reeneable interrupt                             
+}
+
+void gpio_set_interrupt_D(pic32_pin_t pin){
+
+IEC3bits.CNDIE = 0; //Turn off interrupt for port
+CNCONDbits.ON = 1; // Turn on interrupt control register
+CNCONDbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNEND |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC30bits.CNDIP = 2; //Set interrupt priority
+IPC30bits.CNDIS = 2; //Set interrupt subpriority
+IFS3bits.CNDIF = 0; //Clear interrupt flag
+IEC3bits.CNDIE = 1; //reeneable interrupt                             
+}
+
+void gpio_set_interrupt_E(pic32_pin_t pin){
+
+IEC3bits.CNEIE = 0; //Turn off interrupt for port
+CNCONEbits.ON = 1; // Turn on interrupt control register
+CNCONEbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNENE |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC30bits.CNEIP = 2; //Set interrupt priority
+IPC30bits.CNEIS = 2; //Set interrupt subpriority
+IFS3bits.CNEIF = 0; //Clear interrupt flag
+IEC3bits.CNEIE = 1; //reeneable interrupt                             
+}
+
+void gpio_set_interrupt_F(pic32_pin_t pin){
+
+IEC3bits.CNFIE = 0; //Turn off interrupt for port
+CNCONFbits.ON = 1; // Turn on interrupt control register
+CNCONFbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNENF |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC30bits.CNFIP = 2; //Set interrupt priority
+IPC30bits.CNFIS = 2; //Set interrupt subpriority
+IFS3bits.CNFIF = 0; //Clear interrupt flag
+IEC3bits.CNFIE = 1; //reeneable interrupt                             
+}
+
+void gpio_set_interrupt_G(pic32_pin_t pin){
+
+IEC3bits.CNGIE = 0; //Turn off interrupt for port
+CNCONGbits.ON = 1; // Turn on interrupt control register
+CNCONGbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNENG |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC31bits.CNGIP = 2; //Set interrupt priority
+IPC31bits.CNGIS = 2; //Set interrupt subpriority
+IFS3bits.CNGIF = 0; //Clear interrupt flag
+IEC3bits.CNGIE = 1; //reeneable interrupt                             
+}
+
+void gpio_set_interrupt_H(pic32_pin_t pin){
+
+IEC3bits.CNHIE = 0; //Turn off interrupt for port
+CNCONHbits.ON = 1; // Turn on interrupt control register
+CNCONHbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNENH |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC31bits.CNHIP = 2; //Set interrupt priority
+IPC31bits.CNHIS = 2; //Set interrupt subpriority
+IFS3bits.CNHIF = 0; //Clear interrupt flag
+IEC3bits.CNHIE = 1; //reeneable interrupt                             
+}
+
+void gpio_set_interrupt_J(pic32_pin_t pin){
+
+IEC3bits.CNJIE = 0; //Turn off interrupt for port
+CNCONJbits.ON = 1; // Turn on interrupt control register
+CNCONJbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNENJ |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC31bits.CNJIP = 2; //Set interrupt priority
+IPC31bits.CNJIS = 2; //Set interrupt subpriority
+IFS3bits.CNJIF = 0; //Clear interrupt flag
+IEC3bits.CNJIE = 1; //reeneable interrupt                             
+}
+
+void gpio_set_interrupt_K(pic32_pin_t pin){
+
+IEC3bits.CNKIE = 0; //Turn off interrupt for port
+CNCONKbits.ON = 1; // Turn on interrupt control register
+CNCONKbits.EDGEDETECT = 1; //Set rising edge detection register to avoi
+//Treat bit shift according to pin
+CNENK |= (1 << getpinnumber(pin)); //Turn on specific pin to detect interruption
+IPC31bits.CNKIP = 2; //Set interrupt priority
+IPC31bits.CNKIS = 2; //Set interrupt subpriority
+IFS3bits.CNKIF = 0; //Clear interrupt flag
+IEC3bits.CNKIE = 1; //reeneable interrupt                             
+}                                                                                                    

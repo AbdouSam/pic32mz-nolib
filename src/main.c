@@ -94,10 +94,18 @@
 
 #pragma config TSEQ =       0x0000
 #pragma config CSEQ =       0xffff
-//void timer_6_callback(void){
- //gpio_state_toggle(pinB13);
 
-//};
+void timer_6_callback(void){
+static int base_tick = 0;
+base_tick++;
+if (base_tick % 10 == 0){    
+gpio_state_set(pinE9, 0);
+T6CONbits.ON = 0;
+TMR6 = 0;
+}
+};
+
+
 /*void io0interrupt_callback(void){
     gpio_state_toggle(pinE9);
     delay_ms(1000);
@@ -105,23 +113,39 @@
 
 int main(void){
 /* init */
- sysclk_init();
-/*set IO*/
+/* sysclk_init();
+
  gpio_output_set(pinE9);
  gpio_output_set(pinB12);
-/*configure interrupts */
+ gpio_output_set(pinH6);
+ gpio_output_set(pinA1);
+ gpio_output_set(pinB13);
+ gpio_output_set(pinE8);
+ gpio_output_set(pinA0);
+ gpio_output_set(pinG8);
+ gpio_output_set(pinG7);
+
+  gpio_state_set(pinB12, 0);
+  gpio_state_set(pinH6, 0);
+  gpio_state_set(pinA1, 0);
+  gpio_state_set(pinB13, 0);
+  gpio_state_set(pinE8, 0); 
+  gpio_state_set(pinA0, 0);  
+  gpio_state_set(pinG8, 0);  
+  gpio_state_set(pinG7, 0); 
+
+  *configure interrupts 
  //CNCONAbits.ON = 1;
  //CNENAbits.CNIEA14 = 1;
 gpio_input_set(pinA14);
+gpio_input_set(pinD4);
 gpio_set_interrupt(pinA14);
-// init_timer6(10, TMR_PRESCALE_256, 0);
- interrupt_init();
+init_timer6(1, TMR_PRESCALE_256, 0);
+interrupt_init();*/
 /* infinite loop */
  while(true){
-     gpio_state_toggle(pinB12);
-     delay_ms(1000);
+     ;
  }
     return 0;
- }
-;
+ };
   

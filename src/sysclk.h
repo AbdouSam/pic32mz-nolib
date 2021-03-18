@@ -5,7 +5,7 @@
 
 #define PERPHERAL1_CLK_DIV  (1)
 #define PERPHERAL2_CLK_DIV  (1)
-#define PERPHERAL3_CLK_DIV  (4)
+#define PERPHERAL3_CLK_DIV  (127)
 #define PERPHERAL4_CLK_DIV  (1)
 #define PERPHERAL5_CLK_DIV  (1)
 #define PERPHERAL7_CLK_DIV  (0)

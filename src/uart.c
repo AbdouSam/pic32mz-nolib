@@ -172,7 +172,7 @@ static uart_setpins_ft pic32_uart_setpins[] =
   #endif
 };
 
-void init_uart(pic32_uart_t uart_id,
+void uart_init(pic32_uart_t uart_id,
                pic32_uart_parity_data_t pdata,
                pic32_uart_stop_bit_t stop_bit,
                uint32_t baud)

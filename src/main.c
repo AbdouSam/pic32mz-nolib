@@ -163,7 +163,7 @@ int main(void)
   /* Set rs485 bit to output (we use a max485 to interface uart) */
   gpio_state_set(pinA10, true);
 
-  init_uart(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
+  uart_init(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
 
   print_str("Hello World\n");
 

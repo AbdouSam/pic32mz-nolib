@@ -48,12 +48,9 @@ $(BIN_DIR)/firmware.elf: $(OBJS)
 	@echo "LINK $@"
 	@$(CROSS_COMPILE)gcc $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/$(CFG_FILE) $(OBJ_DIR)
+$(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/$(CFG_FILE) $(shell mkdir -p $(OBJ_DIR))
 	@echo "Compile $< to get $@"
 	@$(CROSS_COMPILE)gcc -c -x c $(CFLAGS) $< -o $@  $(LIBS)
-
-$(OBJ_DIR):
-	mkdir -p $@
 
 .PHONY: clean
 

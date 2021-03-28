@@ -14,8 +14,8 @@
 /* GPIO: INPUT, OUTPUT */
 
 #if (PIC32_PIN_COUNT != 64)
-#define GPIO_RA0                    PIC32_GPIO_INPUT
-#define GPIO_RA1                    PIC32_GPIO_INPUT
+#define GPIO_RA0                    PIC32_GPIO_OUTPUT
+#define GPIO_RA1                    PIC32_GPIO_OUTPUT
 #define GPIO_RA2                    PIC32_GPIO_INPUT
 #define GPIO_RA3                    PIC32_GPIO_INPUT
 #define GPIO_RA4                    PIC32_GPIO_INPUT
@@ -30,16 +30,16 @@
 
 #define GPIO_RB0                    PIC32_GPIO_INPUT
 #define GPIO_RB1                    PIC32_GPIO_INPUT
-#define GPIO_RB2                    PIC32_GPIO_INPUT
-#define GPIO_RB3                    PIC32_GPIO_INPUT
-#define GPIO_RB4                    PIC32_GPIO_INPUT
-#define GPIO_RB5                    PIC32_GPIO_INPUT
+#define GPIO_RB2                    PIC32_GPIO_OUTPUT
+#define GPIO_RB3                    PIC32_GPIO_OUTPUT
+#define GPIO_RB4                    PIC32_GPIO_OUTPUT
+#define GPIO_RB5                    PIC32_GPIO_OUTPUT
 #define GPIO_RB6                    PIC32_GPIO_INPUT
 #define GPIO_RB7                    PIC32_GPIO_INPUT
 #define GPIO_RB8                    PIC32_GPIO_INPUT
 #define GPIO_RB9                    PIC32_GPIO_INPUT
 #define GPIO_RB10                   PIC32_GPIO_INPUT
-#define GPIO_RB11                   PIC32_GPIO_INPUT
+#define GPIO_RB11                   PIC32_GPIO_OUTPUT
 #define GPIO_RB12                   PIC32_GPIO_OUTPUT
 #define GPIO_RB13                   PIC32_GPIO_OUTPUT
 #define GPIO_RB14                   PIC32_GPIO_INPUT
@@ -85,8 +85,8 @@
 #define GPIO_RE6                    PIC32_GPIO_INPUT
 #define GPIO_RE7                    PIC32_GPIO_INPUT
 #if (PIC32_PIN_COUNT != 64)
-#define GPIO_RE8                    PIC32_GPIO_INPUT
-#define GPIO_RE9                    PIC32_GPIO_INPUT
+#define GPIO_RE8                    PIC32_GPIO_OUTPUT
+#define GPIO_RE9                    PIC32_GPIO_OUTPUT
 #endif
 
 #define GPIO_RF0                    PIC32_GPIO_INPUT
@@ -107,27 +107,27 @@
 #define GPIO_RG0                    PIC32_GPIO_INPUT
 #define GPIO_RG1                    PIC32_GPIO_INPUT
 #endif
-#define GPIO_RG6                    PIC32_GPIO_INPUT
-#define GPIO_RG7                    PIC32_GPIO_INPUT
-#define GPIO_RG8                    PIC32_GPIO_INPUT
+#define GPIO_RG6                    PIC32_GPIO_OUTPUT
+#define GPIO_RG7                    PIC32_GPIO_OUTPUT
+#define GPIO_RG8                    PIC32_GPIO_OUTPUT
 #define GPIO_RG9                    PIC32_GPIO_INPUT
 #if (PIC32_PIN_COUNT != 64)
 #define GPIO_RG12                   PIC32_GPIO_INPUT
 #define GPIO_RG13                   PIC32_GPIO_INPUT
 #define GPIO_RG14                   PIC32_GPIO_INPUT
-#define GPIO_RG15                   PIC32_GPIO_INPUT
+#define GPIO_RG15                   PIC32_GPIO_OUTPUT
 #endif
 
 #if ((PIC32_PIN_COUNT != 64) && (PIC32_PIN_COUNT != 100))
-#define GPIO_RH0                    PIC32_GPIO_INPUT
-#define GPIO_RH1                    PIC32_GPIO_INPUT
+#define GPIO_RH0                    PIC32_GPIO_OUTPUT
+#define GPIO_RH1                    PIC32_GPIO_OUTPUT
 #if (PIC32_PIN_COUNT != 124)
-#define GPIO_RH2                    PIC32_GPIO_INPUT
-#define GPIO_RH3                    PIC32_GPIO_INPUT
+#define GPIO_RH2                    PIC32_GPIO_OUTPUT
+#define GPIO_RH3                    PIC32_GPIO_OUTPUT
 #endif
 #define GPIO_RH4                    PIC32_GPIO_INPUT
 #define GPIO_RH5                    PIC32_GPIO_INPUT
-#define GPIO_RH6                    PIC32_GPIO_INPUT
+#define GPIO_RH6                    PIC32_GPIO_OUTPUT
 #if (PIC32_PIN_COUNT != 124)
 #define GPIO_RH7                    PIC32_GPIO_INPUT
 #endif

@@ -76,7 +76,7 @@ void test_gpio_set_state_of_output_then_get_state(void)
   TEST_ASSERT_FALSE(gpio_state_get(pinB12));
 
   old_value_latb = LATB;
-  gpio_state_set(pinB12, true);
+  gpio_state_set(pinB12);
   /* MCU write to lat and reads from port, in the hardware they are equals
    * we set them equals manually in test.*/
   old_value_portb = PORTB;

@@ -228,14 +228,25 @@ typedef enum
 }pic32_pin_t;
 
 void gpio_init(void);
+
 bool gpio_state_get(pic32_pin_t nbr);
-void gpio_state_set(pic32_pin_t nbr, bool state);
-void gpio_input_set(pic32_pin_t nbr);
-void gpio_output_set(pic32_pin_t nbr);
+
+void gpio_state_write(pic32_pin_t nbr, bool state);
+void gpio_state_set(pic32_pin_t nbr);
+void gpio_state_clear(pic32_pin_t nbr);
+
 void gpio_state_toggle(pic32_pin_t nbr);
+
+void gpio_input_set(pic32_pin_t nbr);
+
+void gpio_output_set(pic32_pin_t nbr);
+
 int gpio_outfunc_map_set(int func_index, uint8_t value);
+
 int gpio_map_getindex(pic32_pin_t pin);
 
 bool gpio_isinput(pic32_pin_t pin);
+
 bool gpio_isoutput(pic32_pin_t pin);
+
 #endif /* MICROPY_INCLUDED_PIC32_GPIO_H */

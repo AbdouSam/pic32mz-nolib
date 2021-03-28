@@ -516,7 +516,7 @@ void gpio_input_set(pic32_pin_t pin)
   BIT_SET(gpio_tris[port], pin);
 }
 
-void gpio_state_set(pic32_pin_t pin, bool state)
+void gpio_state_write(pic32_pin_t pin, bool state)
 {
   pic32_gpio_port_t port = getportnumber(pin);
 
@@ -530,6 +530,24 @@ void gpio_state_set(pic32_pin_t pin, bool state)
     {
       BIT_CLR(gpio_lat[port], pin);
     }
+}
+
+void gpio_state_set(pic32_pin_t pin)
+{
+  pic32_gpio_port_t port = getportnumber(pin);
+
+  pin = pin - (port * PIC32_MAX_PORT_PIN);
+
+  BIT_SET(gpio_lat[port], pin);
+}
+
+void gpio_state_clear(pic32_pin_t pin)
+{
+  pic32_gpio_port_t port = getportnumber(pin);
+
+  pin = pin - (port * PIC32_MAX_PORT_PIN);
+
+  BIT_CLR(gpio_lat[port], pin);
 }
 
 void gpio_state_toggle(pic32_pin_t pin)

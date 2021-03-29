@@ -1,8 +1,9 @@
-#include "uart.h"
 #include "helpers.h"
 #include "sysclk.h"
 #include "pic32_config.h"
 #include "gpio.h"
+#include "interrupt.h"
+#include "uart.h"
 
 #include <xc.h>
 
@@ -56,7 +57,7 @@
 #define USTA_UTXISEL_MASK   ((1 << USTA_UTXISEL_BIT_1) | \
                              (1 << USTA_UTXISEL_BIT_2))
 
-static uint32_t volatile * const uart_mode[] =
+static uint32_t volatile * const uart_mode[PIC32_UART_MAX] =
 {
   &U1MODE,
   &U2MODE,
@@ -66,7 +67,7 @@ static uint32_t volatile * const uart_mode[] =
   &U6MODE,
 };
 
-static uint32_t volatile * const uart_stat[] =
+static uint32_t volatile * const uart_stat[PIC32_UART_MAX] =
 {
   &U1STA,
   &U2STA,
@@ -76,7 +77,7 @@ static uint32_t volatile * const uart_stat[] =
   &U6STA,
 };
 
-static uint32_t volatile * const uart_brg[] =
+static uint32_t volatile * const uart_brg[PIC32_UART_MAX] =
 {
   &U1BRG,
   &U2BRG,
@@ -86,7 +87,7 @@ static uint32_t volatile * const uart_brg[] =
   &U6BRG,
 };
 
-static uint32_t volatile * const uart_rxreg[] =
+static uint32_t volatile * const uart_rxreg[PIC32_UART_MAX] =
 {
   &U1RXREG,
   &U2RXREG,
@@ -96,7 +97,7 @@ static uint32_t volatile * const uart_rxreg[] =
   &U6RXREG,
 };
 
-static uint32_t volatile * const uart_txreg[] =
+static uint32_t volatile * const uart_txreg[PIC32_UART_MAX] =
 {
   &U1TXREG,
   &U2TXREG,
@@ -106,7 +107,61 @@ static uint32_t volatile * const uart_txreg[] =
   &U6TXREG,
 };
 
+intr_regs_t const uart_rxi[PIC32_UART_MAX] =
+{
+
+  {
+    .flag      = &IFS3,
+    .enable    = &IEC3,
+    .prio      = &IPC28,
+    .prioshift = IPC_PRIO_SHIFT_8,
+    .subpshift = IPC_SUBP_SHIFT_8,
+    .ibit      = 17,
+  },
+  {
+    .flag     = &IFS4,
+    .enable   = &IEC4,
+    .prio     = &IPC36,
+    .prioshift = IPC_PRIO_SHIFT_16,
+    .subpshift = IPC_SUBP_SHIFT_16,
+    .ibit     = 18,
+  },
+  {
+    .flag     = &IFS4,
+    .enable   = &IEC4,
+    .prio     = &IPC39,
+    .prioshift = IPC_PRIO_SHIFT_16,
+    .subpshift = IPC_SUBP_SHIFT_16,
+    .ibit     = 30,
+  },
+  {
+    .flag     = &IFS5,
+    .enable   = &IEC5,
+    .prio     = &IPC42,
+    .prioshift = IPC_PRIO_SHIFT_24,
+    .subpshift = IPC_SUBP_SHIFT_24,
+    .ibit     = 11,
+  },
+  {
+    .flag     = &IFS5,
+    .enable   = &IEC5,
+    .prio     = &IPC45,
+    .prioshift = IPC_PRIO_SHIFT_0,
+    .subpshift = IPC_SUBP_SHIFT_0,
+    .ibit     = 20,
+  },
+  {
+    .flag     = &IFS5,
+    .enable   = &IEC5,
+    .prio     = &IPC47,
+    .prioshift = IPC_PRIO_SHIFT_8,
+    .subpshift = IPC_SUBP_SHIFT_8,
+    .ibit     = 29,
+  },
+
+};
 typedef void (*uart_setpins_ft)(void);
+
 
 #if (PIC32_UART_1_ENABLED == 1)
 static inline void set_uart1_pinmap(void);
@@ -172,7 +227,8 @@ static uart_setpins_ft pic32_uart_setpins[] =
   #endif
 };
 
-void uart_init(pic32_uart_t uart_id,
+
+int uart_init(pic32_uart_t uart_id,
                pic32_uart_parity_data_t pdata,
                pic32_uart_stop_bit_t stop_bit,
                uint32_t baud)
@@ -185,7 +241,7 @@ void uart_init(pic32_uart_t uart_id,
     }
   else
     {
-      return;
+      return -1;
     }
 
   *uart_mode[uart_id] = 0;
@@ -202,6 +258,8 @@ void uart_init(pic32_uart_t uart_id,
   BIT_MASK(uart_mode[uart_id], UMODE_STSEL_MASK, stop_bit);
 
   BIT_SET(uart_mode[uart_id], UMODE_ON_BIT);
+
+  return 0;
 }
 
 int uart_rx_any(pic32_uart_t uart_id)
@@ -220,6 +278,28 @@ void uart_tx_char(pic32_uart_t uart_id, int c)
     {
     }
   (*uart_txreg[uart_id]) = (char)c;
+}
+
+int uart_rxi_set(pic32_uart_t uart_id, uint8_t prio, uint8_t subp, pic32_uart_rxi_t imode)
+{
+
+  bool uartenable = *uart_stat[uart_id] & USTA_URXEN_MASK;
+
+  BIT_CLR(uart_stat[uart_id], USTA_URXEN_BIT);
+  BIT_SET(uart_rxi[uart_id].enable, uart_rxi[uart_id].ibit);
+
+  BIT_WRITE(uart_rxi[uart_id].prio, INT_PRIO_BITLEN, uart_rxi[uart_id].prioshift, prio);
+  BIT_WRITE(uart_rxi[uart_id].prio, INT_SUBP_BITLEN, uart_rxi[uart_id].subpshift, subp);
+
+  BIT_MASK(uart_stat[uart_id], USTA_URXISEL_MASK, imode);
+
+  BIT_CLR(uart_rxi[uart_id].flag, uart_rxi[uart_id].ibit);
+
+  /* If UART was enabled before interrupt re-enable */
+  if (uartenable)
+    BIT_SET(uart_stat[uart_id], USTA_URXEN_BIT);
+
+  return 0;
 }
 
 #if (PIC32_UART_1_ENABLED == 1)

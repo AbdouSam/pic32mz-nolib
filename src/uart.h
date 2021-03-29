@@ -1,5 +1,5 @@
-#ifndef MICROPY_INCLUDED_PIC32_UART_H
-#define MICROPY_INCLUDED_PIC32_UART_H
+#ifndef INCLUDED_PIC32_UART_H
+#define INCLUDED_PIC32_UART_H
 
 #include <stdint.h>
 
@@ -11,6 +11,7 @@ typedef enum
   PIC32_UART_4,
   PIC32_UART_5,
   PIC32_UART_6,
+  PIC32_UART_MAX,
 }pic32_uart_t;
 
 typedef enum
@@ -33,7 +34,7 @@ typedef enum
   IF_RBUF_FULL_1_2_OR_MORE  = (1 << 6),
   IF_RBUF_FULL_3_4_OR_MORE  = (2 << 6),
   IF_RBUF_RESERVED          = (3 << 6),
-}pic32_uart_rx_interrupt_t;
+}pic32_uart_rxi_t;
 
 typedef enum
 {
@@ -41,7 +42,7 @@ typedef enum
   IF_TBUF_ALL_TRANSMITED    = (1 << 14),
   IF_TBUF_IS_EMPTY          = (2 << 14),
   IF_TBUF_RESERVED          = (3 << 14),
-}pic32_uart_tx_interrupt_t;
+}pic32_uart_txi_t;
 
 int uart_rx_any(pic32_uart_t uart_id);
 
@@ -49,9 +50,14 @@ int uart_rx_char(pic32_uart_t uart_id);
 
 void uart_tx_char(pic32_uart_t uart_id, int c);
 
-void uart_init(pic32_uart_t uart_id,
+int uart_init(pic32_uart_t uart_id,
                pic32_uart_parity_data_t pdata,
                pic32_uart_stop_bit_t stop_bit,
                uint32_t baud);
 
-#endif /* MICROPY_INCLUDED_PIC32_UART_H */
+int uart_rxi_set(pic32_uart_t uart_id, 
+                 uint8_t prio,
+                 uint8_t subp,
+                 pic32_uart_rxi_t imode);
+
+#endif /* INCLUDED_PIC32_UART_H */

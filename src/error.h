@@ -1,5 +1,5 @@
-#ifndef MICROPY_INCLUDED_PIC32BIT_ERROR_H
-#define MICROPY_INCLUDED_PIC32BIT_ERROR_H
+#ifndef INCLUDED_PIC32_ERROR_H
+#define INCLUDED_PIC32_ERROR_H
 
 #define OK      (0)
 #define ERR     (-1)
@@ -7,4 +7,4 @@
 #define ERRNV   (-3)    /* not avaialble */
 #define ERRVAL  (-4)    /* wrong value */
 
-#endif /* MICROPY_INCLUDED_PIC32BIT_ERROR_H */
+#endif /* INCLUDED_PIC32_ERROR_H */

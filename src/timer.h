@@ -1,5 +1,5 @@
-#ifndef PIC32MZ_TIMER_H
-#define PIC32MZ_TIMER_H
+#ifndef INCLUDED_PIC32_TIMER_H
+#define INCLUDED_PIC32_TIMER_H
 
 enum
 {
@@ -87,4 +87,4 @@ void init_timer9(uint32_t freq, timers_prescaler_t prescaler,
 
 #endif
 
-#endif /* PIC32MZ_TIMER_H */
+#endif /* INCLUDED_PIC32_TIMER_H */

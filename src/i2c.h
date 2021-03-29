@@ -1,5 +1,5 @@
-#ifndef I2C_H
-#define I2C_H
+#ifndef INCLUDED_PIC32_I2C_H
+#define INCLUDED_PIC32_I2C_H
 
 void i2c_init(double speed);
 
@@ -9,4 +9,4 @@ void i2c_restart(void);
 void i2c_stop(void);
 void i2c_start(void);
 
-#endif /*I2C_H */
+#endif /* INCLUDED_PIC32_I2C_H */

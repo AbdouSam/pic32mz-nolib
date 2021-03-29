@@ -1,5 +1,5 @@
-#ifndef MICROPY_INCLUDED_PIC32_GPIO_H
-#define MICROPY_INCLUDED_PIC32_GPIO_H
+#ifndef INCLUDED_PIC32_GPIO_H
+#define INCLUDED_PIC32_GPIO_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -249,4 +249,4 @@ bool gpio_isinput(pic32_pin_t pin);
 
 bool gpio_isoutput(pic32_pin_t pin);
 
-#endif /* MICROPY_INCLUDED_PIC32_GPIO_H */
+#endif /* INCLUDED_PIC32_GPIO_H */

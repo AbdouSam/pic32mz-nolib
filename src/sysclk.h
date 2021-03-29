@@ -1,5 +1,5 @@
-#ifndef PIC32_INCLUDED_SYSCLK_H
-#define PIC32_INCLUDED_SYSCLK_H
+#ifndef INCLUDED_PIC32_SYSCLK_H
+#define INCLUDED_PIC32_SYSCLK_H
 
 #include <stdint.h>
 
@@ -18,4 +18,4 @@ uint32_t sysclk_timerfreq_get(void);
 uint32_t sysclk_uartfreq_get(void);
 void sysclk_init(void);
 
-#endif /* PIC32_INCLUDED_SYSCLK_H */
+#endif /* INCLUDED_PIC32_SYSCLK_H */

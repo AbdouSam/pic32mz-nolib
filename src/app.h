@@ -1,5 +1,5 @@
-#ifndef APP_H
-#define APP_H
+#ifndef INCLUDED_APP_H
+#define INCLUDED_APP_H
 
 #define LED_YELLOW  pinH6
 #define LED_RED     pinB13
@@ -17,4 +17,4 @@ int app_init(void);
  */
 void app_task(void);
 
-#endif /* APP_H */
+#endif /* INCLUDED_APP_H */

@@ -68,7 +68,7 @@ printfiles:
 	@echo "src files: $(SRC_C)"
 	@echo "obj files:  $(OBJS)"
 
-program:
+program: all
 	@sleep 1
 	@python tools/programmer.py -i udp -a 192.168.1.60 -e
 	@sleep 1

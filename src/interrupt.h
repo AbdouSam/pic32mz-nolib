@@ -16,6 +16,8 @@
 #define IPC_SUBP_SHIFT_24 (24U)
 #define IPC_PRIO_SHIFT_24 (26U)
 
+typedef void (*int_callback_ft)(void);
+
 typedef struct
 {
   uint32_t volatile * const  flag;
@@ -24,7 +26,6 @@ typedef struct
   uint32_t prioshift;
   uint32_t subpshift;
   uint8_t ibit;
-
 }intr_regs_t;
 
 void interrupt_init(void);

@@ -53,7 +53,7 @@ $(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/$(CFG_FILE) $(shell mkdir -p 
 	@echo "Compile $< to get $@"
 	@$(CROSS_COMPILE)gcc -c -x c $(CFLAGS) $< -o $@  $(LIBS)
 
-.PHONY: clean
+.PHONY: clean all program
 
 clean:
 	@rm -f $(OBJS)
@@ -67,3 +67,11 @@ uncrustify:
 printfiles:
 	@echo "src files: $(SRC_C)"
 	@echo "obj files:  $(OBJS)"
+
+program:
+	@sleep 1
+	@python tools/programmer.py -i udp -a 192.168.1.60 -e
+	@sleep 1
+	@python tools/programmer.py -i udp -a 192.168.1.60 -u build/release/firmware.hex
+	@sleep 1
+	@python tools/programmer.py -i udp -a 192.168.1.60 -r

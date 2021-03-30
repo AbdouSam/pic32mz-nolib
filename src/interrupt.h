@@ -25,10 +25,10 @@ typedef struct
   uint32_t volatile * const  prio;
   uint32_t prioshift;
   uint32_t subpshift;
+  uint8_t defprio;
   uint8_t ibit;
 }intr_regs_t;
 
 void interrupt_init(void);
 uint32_t interrupt_tick_get(void);
-
 #endif /* INCLUDED_PIC32_INTERRUPT_H */

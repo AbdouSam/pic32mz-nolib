@@ -8,7 +8,7 @@
 #include <xc.h>
 
 #include "pic32_config.h"
-#include "uart.h"
+#include "helpers.h"
 #include "sysclk.h"
 #include "gpio.h"
 #include "uart.h"
@@ -18,6 +18,7 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "app.h"
+#include "uart.h"
 
 /* This define is to set the  µC to run on internal clock
  * config is set to run CPU at 200 Mhz,
@@ -103,17 +104,20 @@
 
 
 static char          c_tmp;
+static char          rx_tmp[10];
+static int           rx_index = 0;
 static unsigned char rtc_val[7];
-static unsigned int  millis;
-static bool wdt_clear_flag = true;
+static unsigned int  millis = 0;
+static bool          wdt_clear_flag = true;
 
 static void wdt_clear(void)
 {
   volatile uint16_t * wdtclrkey;
-
+  asm volatile("di");
   /* get address of upper 16-bit word of the WDTCON SFR */
   wdtclrkey     = ( (volatile uint16_t *)&WDTCON ) + 1;
   *wdtclrkey    = 0x5743;
+  asm volatile("ei");
 }
 
 static void print_str(const char *s)
@@ -139,7 +143,23 @@ static char read_char(void)
 void timer_2_callback(void)
 {
   gpio_state_toggle(LED_RED);
+  gpio_state_toggle(LED_GREEN);
   wdt_clear_flag = true;
+}
+
+void uart_callback(void)
+{
+
+  gpio_state_toggle(pinE9);
+  c_tmp = read_char();
+  if (c_tmp != '\n')
+    rx_tmp[rx_index] = c_tmp;
+
+  rx_index++;
+  if (rx_index > 9)
+  {
+    rx_index = 0;
+  }
 }
 
 int app_init(void)
@@ -150,8 +170,12 @@ int app_init(void)
   /* Initial IO as it is set in pic32_config.h */
   gpio_init();
 
-  gpio_state_set(LED_ORANGE);
-  gpio_state_set(LED_RED);
+  gpio_state_clear(LED_ORANGE);
+  gpio_state_clear(LED_RED);
+  gpio_state_clear(LED_GREEN);
+
+  /* Set rs485 bit to output (we use a max485 to interface uart) */
+  gpio_state_set(RS485_1_RW);
 
   /* For the interrupt tick */
   init_timer1(1000, TMR_PRESCALE_1, 0);
@@ -159,14 +183,10 @@ int app_init(void)
   /* use it to clear watchdog. */
   init_timer2(1, TMR_PRESCALE_256, 0);
 
-  interrupt_init();
-
-
-  /* Set rs485 bit to output (we use a max485 to interface uart) */
-  gpio_state_set(RS485_RW);
-
   delay_ms(100);
 
+  uart_rxi_set(PIC32_UART_4, 3, IF_RBUF_NOT_EMPTY, uart_callback);
+  
   uart_init(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
 
   print_str("Hello World\n");
@@ -175,13 +195,14 @@ int app_init(void)
 
   rtc_init();
 
-  millis = interrupt_tick_get();
+  interrupt_init();
 
   return 0;
 }
 
 void app_task(void)
 {
+  int c_local;
 
   if (interrupt_tick_get() - millis >= 500)
     {
@@ -195,15 +216,22 @@ void app_task(void)
     }
 
   /* test read the uart */
-  c_tmp = read_char();
 
-  if (c_tmp == 'x')
+  if ((c_tmp >= 'a') && (c_tmp <= 'z'))
     {
-      print_str("X is pressed.\n");
+      uart_tx_char(PIC32_UART_4, c_tmp);
+      uart_tx_char(PIC32_UART_4, '\n');
+      c_tmp = 0;
     }
-  else if (c_tmp == '\n')
+
+  if (c_tmp == '\n')
     {
-      print_str("Line Feed.\n");
+      print_str("Word: ");
+      for (c_local = 0; c_local<10; c_local++)
+        uart_tx_char(PIC32_UART_4, rx_tmp[c_local]);
+      
+      uart_tx_char(PIC32_UART_4, '\n');
+      c_tmp = 0;
     }
 
   if (wdt_clear_flag)

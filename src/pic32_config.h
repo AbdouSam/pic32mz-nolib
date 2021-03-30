@@ -191,15 +191,15 @@
 #define TIMER_8_ENABLED             (0)
 #define TIMER_9_ENABLED             (0)
 
-#define TIMER1_INTERRUPT_PERIORITY  3
-#define TIMER2_INTERRUPT_PERIORITY  4
-#define TIMER3_INTERRUPT_PERIORITY  4
-#define TIMER4_INTERRUPT_PERIORITY  4
-#define TIMER5_INTERRUPT_PERIORITY  4
-#define TIMER6_INTERRUPT_PERIORITY  4
-#define TIMER7_INTERRUPT_PERIORITY  4
-#define TIMER8_INTERRUPT_PERIORITY  4
-#define TIMER9_INTERRUPT_PERIORITY  4
+#define TIMER1_INT_PRIO  7
+#define TIMER2_INT_PRIO  4
+#define TIMER3_INT_PRIO  4
+#define TIMER4_INT_PRIO  4
+#define TIMER5_INT_PRIO  4
+#define TIMER6_INT_PRIO  4
+#define TIMER7_INT_PRIO  4
+#define TIMER8_INT_PRIO  4
+#define TIMER9_INT_PRIO  4
 
 /* UART */
 
@@ -209,6 +209,14 @@
 #define PIC32_UART_4_ENABLED        (1)
 #define PIC32_UART_5_ENABLED        (0)
 #define PIC32_UART_6_ENABLED        (0)
+
+/* These priorities sets the Shadow-set registers */
+#define UART1_INT_PRIO  1
+#define UART2_INT_PRIO  1
+#define UART3_INT_PRIO  1
+#define UART4_INT_PRIO  5
+#define UART5_INT_PRIO  1
+#define UART6_INT_PRIO  1
 
 /* Pin mapping (from Datasheet) */
 

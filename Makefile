@@ -1,6 +1,7 @@
 CROSS_COMPILE ?= xc32-
 
 MCU = 32MZ2048EFM144
+LD_SCRIPT = custom
 
 INC_DIR = -I./src
 
@@ -33,7 +34,12 @@ MIN_STACK_SIZE = 0x400
 #Debugging/Optimization
 LDFLAGS = -mprocessor=$(MCU)
 LDFLAGS+= -no-legacy-libc 
-LDFLAGS+= -Wl,--script="$(LD_DIR)/$(LD_FILE)",--gc-sections,--no-code-in-dinit,--no-dinit-in-serial-mem,-Map=$(BIN_DIR)/firmware.map
+
+ifeq ($(LD_SCRIPT), custom)
+LDFLAGS+= -Wl,--script="$(LD_DIR)/$(LD_FILE)"
+endif
+
+LDFLAGS+= -Wl,--gc-sections,--no-code-in-dinit,--no-dinit-in-serial-mem,-Map=$(BIN_DIR)/firmware.map
 LDFLAGS+= -Wl,--defsym=_min_heap_size=$(MIN_HEAP_SIZE),--defsym=_min_stack_size=$(MIN_STACK_SIZE)
 LIBS = -lc -lm
 

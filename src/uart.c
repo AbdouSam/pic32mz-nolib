@@ -1,11 +1,12 @@
+#include <xc.h>
+
+#include "interrupt.h"
 #include "helpers.h"
 #include "sysclk.h"
 #include "pic32_config.h"
 #include "gpio.h"
-#include "interrupt.h"
-#include "uart.h"
 
-#include <xc.h>
+#include "uart.h"
 
 #define PIC32_FUNC_U1TX     (0x01)
 #define PIC32_FUNC_U2TX     (0x02)
@@ -116,6 +117,7 @@ intr_regs_t const uart_rxi[PIC32_UART_MAX] =
     .prio      = &IPC28,
     .prioshift = IPC_PRIO_SHIFT_8,
     .subpshift = IPC_SUBP_SHIFT_8,
+    .defprio   = UART1_INT_PRIO,
     .ibit      = 17,
   },
   {
@@ -124,6 +126,7 @@ intr_regs_t const uart_rxi[PIC32_UART_MAX] =
     .prio     = &IPC36,
     .prioshift = IPC_PRIO_SHIFT_16,
     .subpshift = IPC_SUBP_SHIFT_16,
+    .defprio   = UART2_INT_PRIO,
     .ibit     = 18,
   },
   {
@@ -132,6 +135,7 @@ intr_regs_t const uart_rxi[PIC32_UART_MAX] =
     .prio     = &IPC39,
     .prioshift = IPC_PRIO_SHIFT_16,
     .subpshift = IPC_SUBP_SHIFT_16,
+    .defprio   = UART3_INT_PRIO,
     .ibit     = 30,
   },
   {
@@ -140,6 +144,7 @@ intr_regs_t const uart_rxi[PIC32_UART_MAX] =
     .prio     = &IPC42,
     .prioshift = IPC_PRIO_SHIFT_24,
     .subpshift = IPC_SUBP_SHIFT_24,
+    .defprio   = UART4_INT_PRIO,
     .ibit     = 11,
   },
   {
@@ -148,6 +153,7 @@ intr_regs_t const uart_rxi[PIC32_UART_MAX] =
     .prio     = &IPC45,
     .prioshift = IPC_PRIO_SHIFT_0,
     .subpshift = IPC_SUBP_SHIFT_0,
+    .defprio   = UART5_INT_PRIO,
     .ibit     = 20,
   },
   {
@@ -156,10 +162,14 @@ intr_regs_t const uart_rxi[PIC32_UART_MAX] =
     .prio     = &IPC47,
     .prioshift = IPC_PRIO_SHIFT_8,
     .subpshift = IPC_SUBP_SHIFT_8,
+    .defprio   = UART6_INT_PRIO,
     .ibit     = 29,
   },
 
 };
+
+static int_callback_ft uart_rxi_cb[PIC32_UART_MAX];
+
 typedef void (*uart_setpins_ft)(void);
 
 
@@ -280,7 +290,10 @@ void uart_tx_char(pic32_uart_t uart_id, int c)
   (*uart_txreg[uart_id]) = (char)c;
 }
 
-int uart_rxi_set(pic32_uart_t uart_id, uint8_t prio, uint8_t subp, pic32_uart_rxi_t imode)
+int uart_rxi_set(pic32_uart_t uart_id, 
+                 uint8_t subp, 
+                 pic32_uart_rxi_t imode,
+                 int_callback_ft intcb)
 {
 
   bool uartenable = *uart_stat[uart_id] & USTA_URXEN_MASK;
@@ -288,13 +301,21 @@ int uart_rxi_set(pic32_uart_t uart_id, uint8_t prio, uint8_t subp, pic32_uart_rx
   BIT_CLR(uart_stat[uart_id], USTA_URXEN_BIT);
   BIT_SET(uart_rxi[uart_id].enable, uart_rxi[uart_id].ibit);
 
-  BIT_WRITE(uart_rxi[uart_id].prio, INT_PRIO_BITLEN, uart_rxi[uart_id].prioshift, prio);
-  BIT_WRITE(uart_rxi[uart_id].prio, INT_SUBP_BITLEN, uart_rxi[uart_id].subpshift, subp);
+  BIT_WRITE(uart_rxi[uart_id].prio, INT_PRIO_BITLEN, 
+            uart_rxi[uart_id].prioshift,
+            uart_rxi[uart_id].defprio);
+
+  BIT_WRITE(uart_rxi[uart_id].prio, INT_SUBP_BITLEN,
+            uart_rxi[uart_id].subpshift,
+            subp);
 
   BIT_MASK(uart_stat[uart_id], USTA_URXISEL_MASK, imode);
 
   BIT_CLR(uart_rxi[uart_id].flag, uart_rxi[uart_id].ibit);
 
+  if (intcb != NULL)
+    uart_rxi_cb[uart_id] = intcb;
+  
   /* If UART was enabled before interrupt re-enable */
   if (uartenable)
     BIT_SET(uart_stat[uart_id], USTA_URXEN_BIT);
@@ -461,4 +482,55 @@ static inline void set_uart6_pinmap(void)
   gpio_input_set(PIC32_UART_6_RX_PIN);
 }
 
+#endif
+
+
+/* Interrupts callbacks */
+
+#if (PIC32_UART_1_ENABLED == 1)
+void uartrx_1_callback(void)
+{
+  if (uart_rxi_cb[PIC32_UART_1] != NULL)
+    uart_rxi_cb[PIC32_UART_1]();
+}
+#endif
+
+#if (PIC32_UART_2_ENABLED == 1)
+void uartrx_2_callback(void)
+{
+  if (uart_rxi_cb[PIC32_UART_2] != NULL)
+    uart_rxi_cb[PIC32_UART_2]();
+}
+#endif
+
+#if (PIC32_UART_3_ENABLED == 1)
+void uartrx_3_callback(void)
+{
+  if (uart_rxi_cb[PIC32_UART_3] != NULL)
+    uart_rxi_cb[PIC32_UART_3]();
+}
+#endif
+
+#if (PIC32_UART_4_ENABLED == 1)
+void uartrx_4_callback(void)
+{
+  if (uart_rxi_cb[PIC32_UART_4] != NULL)
+    uart_rxi_cb[PIC32_UART_4]();
+}
+#endif
+
+#if (PIC32_UART_5_ENABLED == 1)
+void uartrx_5_callback(void)
+{
+  if (uart_rxi_cb[PIC32_UART_5] != NULL)
+    uart_rxi_cb[PIC32_UART_5]();
+}
+#endif
+
+#if (PIC32_UART_6_ENABLED == 1)
+void uartrx_6_callback(void)
+{
+  if (uart_rxi_cb[PIC32_UART_6] != NULL)
+    uart_rxi_cb[PIC32_UART_6]();
+}
 #endif

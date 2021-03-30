@@ -57,6 +57,13 @@
 #define USTA_UTXINV_MASK    (1 << USTA_UTXINV_BIT)
 #define USTA_UTXISEL_MASK   ((1 << USTA_UTXISEL_BIT_1) | \
                              (1 << USTA_UTXISEL_BIT_2))
+typedef struct
+{
+  uint8_t rxpin;
+  uint8_t txpin;
+  uint8_t txfun;
+  uint32_t volatile * const rxreg;
+}uart_map_t;
 
 static uint32_t volatile * const uart_mode[PIC32_UART_MAX] =
 {
@@ -108,7 +115,7 @@ static uint32_t volatile * const uart_txreg[PIC32_UART_MAX] =
   &U6TXREG,
 };
 
-intr_regs_t const uart_rxi[PIC32_UART_MAX] =
+static intr_regs_t const uart_rxi[PIC32_UART_MAX] =
 {
 
   {
@@ -168,74 +175,63 @@ intr_regs_t const uart_rxi[PIC32_UART_MAX] =
 
 };
 
+static uart_map_t const uart_map[PIC32_UART_MAX]=
+{
+
+  {
+  #if (PIC32_UART_1_ENABLED == 1)
+    .rxpin = PIC32_UART_1_RX_PIN,
+    .txpin = PIC32_UART_1_TX_PIN,
+    .rxreg = &U1RXR,
+    .txfun = PIC32_FUNC_U1TX,
+  #endif
+  },
+  {
+  #if (PIC32_UART_2_ENABLED == 1)
+    .rxpin = PIC32_UART_2_RX_PIN,
+    .txpin = PIC32_UART_2_TX_PIN,
+    .rxreg = &U2RXR,
+    .txfun = PIC32_FUNC_U2TX,
+  #endif
+  },
+  {
+  #if (PIC32_UART_3_ENABLED == 1)
+    .rxpin = PIC32_UART_3_RX_PIN,
+    .txpin = PIC32_UART_3_TX_PIN,
+    .rxreg = &U3RXR,
+    .txfun = PIC32_FUNC_U3TX,
+  #endif
+  },
+  {
+  #if (PIC32_UART_4_ENABLED == 1)
+    .rxpin = PIC32_UART_4_RX_PIN,
+    .txpin = PIC32_UART_4_TX_PIN,
+    .rxreg = &U4RXR,
+    .txfun = PIC32_FUNC_U4TX,
+  #endif
+  },
+  {
+  #if (PIC32_UART_5_ENABLED == 1)
+    .rxpin = PIC32_UART_5_RX_PIN,
+    .txpin = PIC32_UART_5_TX_PIN,
+    .rxreg = &U5RXR,
+    .txfun = PIC32_FUNC_U5TX,
+  #endif
+  },
+  {
+  #if (PIC32_UART_6_ENABLED == 1)
+    .rxpin = PIC32_UART_6_RX_PIN,
+    .txpin = PIC32_UART_6_TX_PIN,
+    .rxreg = &U6RXR,
+    .txfun = PIC32_FUNC_U6TX,
+  #endif
+  },
+
+};
+
 static int_callback_ft uart_rxi_cb[PIC32_UART_MAX];
 
-typedef void (*uart_setpins_ft)(void);
-
-
-#if (PIC32_UART_1_ENABLED == 1)
-static inline void set_uart1_pinmap(void);
-
-#endif
-
-#if (PIC32_UART_2_ENABLED == 1)
-static inline void set_uart2_pinmap(void);
-
-#endif
-
-#if (PIC32_UART_3_ENABLED == 1)
-static inline void set_uart3_pinmap(void);
-
-#endif
-
-#if (PIC32_UART_4_ENABLED == 1)
-static inline void set_uart4_pinmap(void);
-
-#endif
-
-#if (PIC32_UART_5_ENABLED == 1)
-static inline void set_uart5_pinmap(void);
-
-#endif
-
-#if (PIC32_UART_6_ENABLED == 1)
-static inline void set_uart6_pinmap(void);
-
-#endif
-
-static uart_setpins_ft pic32_uart_setpins[] =
-{
-  #if (PIC32_UART_1_ENABLED == 1)
-  set_uart1_pinmap,
-  #else
-  NULL,
-  #endif
-  #if (PIC32_UART_2_ENABLED == 1)
-  set_uart2_pinmap,
-  #else
-  NULL,
-  #endif
-  #if (PIC32_UART_3_ENABLED == 1)
-  set_uart3_pinmap,
-  #else
-  NULL,
-  #endif
-  #if (PIC32_UART_4_ENABLED == 1)
-  set_uart4_pinmap,
-  #else
-  NULL,
-  #endif
-  #if (PIC32_UART_5_ENABLED == 1)
-  set_uart5_pinmap,
-  #else
-  NULL,
-  #endif
-  #if (PIC32_UART_6_ENABLED == 1)
-  set_uart6_pinmap,
-  #else
-  NULL,
-  #endif
-};
+static inline int set_uart_pinmap(pic32_uart_t uart_id);
 
 
 int uart_init(pic32_uart_t uart_id,
@@ -245,14 +241,10 @@ int uart_init(pic32_uart_t uart_id,
 {
   uint32_t pb_uart_clk = sysclk_uartfreq_get();
 
-  if (pic32_uart_setpins[uart_id] != NULL)
-    {
-      pic32_uart_setpins[uart_id]();
-    }
-  else
-    {
-      return -1;
-    }
+  if (set_uart_pinmap(uart_id) < -1)
+  {
+    return -1;
+  }
 
   *uart_mode[uart_id] = 0;
 
@@ -323,167 +315,30 @@ int uart_rxi_set(pic32_uart_t uart_id,
   return 0;
 }
 
-#if (PIC32_UART_1_ENABLED == 1)
-static inline void set_uart1_pinmap(void)
+static inline int set_uart_pinmap(pic32_uart_t uart_id)
 {
   uint8_t func_index;
 
-  func_index = gpio_map_getindex(PIC32_UART_1_RX_PIN);
+  func_index = gpio_map_getindex(uart_map[uart_id].rxpin);
 
   if (func_index != INPUT_PIN_NC)
     {
       func_index    = func_index % PIC32_MAX_PORT_PIN;
-      U1RXR         = func_index;
+      *(uart_map[uart_id].rxreg)         = func_index;
     }
   else
     {
-      /* wrong mapping value */
+      return -1; 
     }
-  func_index = gpio_map_getindex(PIC32_UART_1_TX_PIN);
 
-  gpio_outfunc_map_set(func_index, PIC32_FUNC_U1TX);
+  func_index = gpio_map_getindex(uart_map[uart_id].txpin);
 
-  gpio_input_set(PIC32_UART_1_RX_PIN);
+  gpio_outfunc_map_set(func_index, uart_map[uart_id].txfun);
 
-  gpio_input_set(PIC32_UART_1_RX_PIN);
+  gpio_input_set(uart_map[uart_id].rxpin);
+
+  return 0;
 }
-
-#endif
-
-#if (PIC32_UART_2_ENABLED == 1)
-static inline void set_uart2_pinmap(void)
-{
-  uint8_t func_index;
-
-  func_index = gpio_map_getindex(PIC32_UART_2_RX_PIN);
-
-  if (func_index != INPUT_PIN_NC)
-    {
-      func_index    = func_index % PIC32_MAX_PORT_PIN;
-      U2RXR         = func_index;
-    }
-  else
-    {
-      /* wrong mapping value */
-    }
-  func_index = gpio_map_getindex(PIC32_UART_2_TX_PIN);
-
-  gpio_outfunc_map_set(func_index, PIC32_FUNC_U2TX);
-
-  gpio_input_set(PIC32_UART_2_RX_PIN);
-
-  gpio_input_set(PIC32_UART_2_RX_PIN);
-}
-
-#endif
-
-#if (PIC32_UART_3_ENABLED == 1)
-static inline void set_uart3_pinmap(void)
-{
-  uint8_t func_index;
-
-  func_index = gpio_map_getindex(PIC32_UART_3_RX_PIN);
-
-  if (func_index != INPUT_PIN_NC)
-    {
-      func_index    = func_index % PIC32_MAX_PORT_PIN;
-      U3RXR         = func_index;
-    }
-  else
-    {
-      /* wrong mapping value */
-    }
-  func_index = gpio_map_getindex(PIC32_UART_3_TX_PIN);
-
-  gpio_outfunc_map_set(func_index, PIC32_FUNC_U3TX);
-
-  gpio_input_set(PIC32_UART_3_RX_PIN);
-
-  gpio_input_set(PIC32_UART_3_RX_PIN);
-}
-
-#endif
-
-#if (PIC32_UART_4_ENABLED == 1)
-static inline void set_uart4_pinmap(void)
-{
-  uint8_t func_index;
-
-  func_index = gpio_map_getindex(PIC32_UART_4_RX_PIN);
-
-  if (func_index != INPUT_PIN_NC)
-    {
-      func_index    = func_index % PIC32_MAX_PORT_PIN;
-      U4RXR         = func_index;
-    }
-  else
-    {
-      /* wrong mapping value */
-    }
-
-  func_index = gpio_map_getindex(PIC32_UART_4_TX_PIN);
-
-  gpio_outfunc_map_set(func_index, PIC32_FUNC_U4TX);
-
-  gpio_input_set(PIC32_UART_4_RX_PIN);
-}
-
-#endif
-
-#if (PIC32_UART_5_ENABLED == 1)
-static inline void set_uart5_pinmap(void)
-{
-  uint8_t func_index;
-
-  func_index = gpio_map_getindex(PIC32_UART_5_RX_PIN);
-
-  if (func_index != INPUT_PIN_NC)
-    {
-      func_index    = func_index % PIC32_MAX_PORT_PIN;
-      U5RXR         = func_index;
-    }
-  else
-    {
-      /* wrong mapping value */
-    }
-  func_index = gpio_map_getindex(PIC32_UART_5_TX_PIN);
-
-  gpio_outfunc_map_set(func_index, PIC32_FUNC_U5TX);
-
-  gpio_input_set(PIC32_UART_5_RX_PIN);
-
-  gpio_input_set(PIC32_UART_5_RX_PIN);
-}
-
-#endif
-
-#if (PIC32_UART_6_ENABLED == 1)
-static inline void set_uart6_pinmap(void)
-{
-  uint8_t func_index;
-
-  func_index = gpio_map_getindex(PIC32_UART_6_RX_PIN);
-
-  if (func_index != INPUT_PIN_NC)
-    {
-      func_index    = func_index % PIC32_MAX_PORT_PIN;
-      U6RXR         = func_index;
-    }
-  else
-    {
-      /* wrong mapping value */
-    }
-  func_index = gpio_map_getindex(PIC32_UART_6_TX_PIN);
-
-  gpio_outfunc_map_set(func_index, PIC32_FUNC_U6TX);
-
-  gpio_input_set(PIC32_UART_6_RX_PIN);
-
-  gpio_input_set(PIC32_UART_6_RX_PIN);
-}
-
-#endif
-
 
 /* Interrupts callbacks */
 

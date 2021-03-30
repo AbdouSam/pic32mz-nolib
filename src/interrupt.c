@@ -2,17 +2,25 @@
 #include <xc.h>
 #include "pic32_config.h"
 
-#define IFSbits_TIF(x, y)  IFS ## y ## bits.T ## x ## IF
+#define IFSbits_TIF(x, y)   IFS ## y ## bits.T ## x ## IF
+#define IFSbits_URXIF(x, y) IFS ## y ## bits.U ## x ## RXIF
 
-#define ipltmr1AUTO     iplAUTO(TIMER1_INTERRUPT_PERIORITY)
-#define ipltmr2AUTO     iplAUTO(TIMER2_INTERRUPT_PERIORITY)
-#define ipltmr3AUTO     iplAUTO(TIMER3_INTERRUPT_PERIORITY)
-#define ipltmr4AUTO     iplAUTO(TIMER4_INTERRUPT_PERIORITY)
-#define ipltmr5AUTO     iplAUTO(TIMER5_INTERRUPT_PERIORITY)
-#define ipltmr6AUTO     iplAUTO(TIMER6_INTERRUPT_PERIORITY)
-#define ipltmr7AUTO     iplAUTO(TIMER7_INTERRUPT_PERIORITY)
-#define ipltmr8AUTO     iplAUTO(TIMER8_INTERRUPT_PERIORITY)
-#define ipltmr9AUTO     iplAUTO(TIMER9_INTERRUPT_PERIORITY)
+#define ipltmr1AUTO     iplAUTO(TIMER1_INT_PRIO)
+#define ipltmr2AUTO     iplAUTO(TIMER2_INT_PRIO)
+#define ipltmr3AUTO     iplAUTO(TIMER3_INT_PRIO)
+#define ipltmr4AUTO     iplAUTO(TIMER4_INT_PRIO)
+#define ipltmr5AUTO     iplAUTO(TIMER5_INT_PRIO)
+#define ipltmr6AUTO     iplAUTO(TIMER6_INT_PRIO)
+#define ipltmr7AUTO     iplAUTO(TIMER7_INT_PRIO)
+#define ipltmr8AUTO     iplAUTO(TIMER8_INT_PRIO)
+#define ipltmr9AUTO     iplAUTO(TIMER9_INT_PRIO)
+
+#define ipluart1AUTO    iplAUTO(UART1_INT_PRIO)
+#define ipluart2AUTO    iplAUTO(UART2_INT_PRIO)
+#define ipluart3AUTO    iplAUTO(UART3_INT_PRIO)
+#define ipluart4AUTO    iplAUTO(UART4_INT_PRIO)
+#define ipluart5AUTO    iplAUTO(UART5_INT_PRIO)
+#define ipluart6AUTO    iplAUTO(UART6_INT_PRIO)
 
 #define iplAUTO(x)  ipl(x)
 #define ipl(x)      ipl ## x ## AUTO
@@ -136,6 +144,66 @@ void __attribute__((vector(_TIMER_9_VECTOR), interrupt(ipltmr9AUTO),
   timer_9_callback();
 }
 
+#endif
+
+#if (PIC32_UART_1_ENABLED == 1)
+extern void uartrx_1_callback(void);
+void __attribute__((vector(_UART1_RX_VECTOR), interrupt(ipluart1AUTO),
+                         nomips16)) _uartrx1_interrupt(void)
+{
+  uartrx_1_callback();
+  IFSbits_URXIF(1, 3) = 0;
+}
+#endif
+
+#if (PIC32_UART_2_ENABLED == 1)
+extern void uartrx_2_callback(void);
+void __attribute__((vector(_UART2_RX_VECTOR), interrupt(ipluart2AUTO),
+                         nomips16)) _uartrx2_interrupt(void)
+{
+  uartrx_2_callback();
+  IFSbits_URXIF(2, 4) = 0;
+}
+#endif
+
+#if (PIC32_UART_3_ENABLED == 1)
+extern void uartrx_3_callback(void);
+void __attribute__((vector(_UART3_RX_VECTOR), interrupt(ipluart3AUTO),
+                         nomips16)) _uartrx3_interrupt(void)
+{
+  uartrx_3_callback();
+  IFSbits_URXIF(3, 4) = 0;
+}
+#endif
+
+#if (PIC32_UART_4_ENABLED == 1)
+extern void uartrx_4_callback(void);
+void __attribute__((vector(_UART4_RX_VECTOR), interrupt(ipluart4AUTO),
+                         nomips16)) _uartrx4_interrupt(void)
+{
+  uartrx_4_callback();
+  IFSbits_URXIF(4, 5) = 0;
+}
+#endif
+
+#if (PIC32_UART_5_ENABLED == 1)
+extern void uartrx_5_callback(void);
+void __attribute__((vector(_UART5_RX_VECTOR), interrupt(ipluart5AUTO),
+                         nomips16)) _uartrx5_interrupt(void)
+{
+  uartrx_5_callback();
+  IFSbits_URXIF(5, 5) = 0;
+}
+#endif
+
+#if (PIC32_UART_6_ENABLED == 1)
+extern void uartrx_6_callback(void);
+void __attribute__((vector(_UART6_RX_VECTOR), interrupt(ipluart6AUTO),
+                         nomips16)) _uartrx6_interrupt(void)
+{
+  uartrx_6_callback();
+  IFSbits_URXIF(6, 5) = 0;
+}
 #endif
 
 void interrupt_init(void)

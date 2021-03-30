@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "interrupt.h"
+
 typedef enum
 {
   PIC32_UART_1,
@@ -55,9 +57,19 @@ int uart_init(pic32_uart_t uart_id,
                pic32_uart_stop_bit_t stop_bit,
                uint32_t baud);
 
+/**
+ * @brief set uart receive interrupt
+ *
+ * @param uart_id the uart id
+ * @param subp subpriority, priority being set at compile time (see README)
+ * @param imode interrupt mode, trigger interrupt if one character is received
+ *  or 3, ..etc
+ * @param intcb the callback of interrupt void f(void)
+ */
+
 int uart_rxi_set(pic32_uart_t uart_id, 
-                 uint8_t prio,
-                 uint8_t subp,
-                 pic32_uart_rxi_t imode);
+                 uint8_t subp, 
+                 pic32_uart_rxi_t imode,
+                 int_callback_ft intcb);
 
 #endif /* INCLUDED_PIC32_UART_H */

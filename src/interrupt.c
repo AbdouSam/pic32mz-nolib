@@ -19,16 +19,20 @@
 
 uint32_t global_tick = 0;
 
+#if 0
 void __attribute__((vector(_TIMER_1_VECTOR), interrupt(ipltmr1AUTO),
                     nomips16)) _timer1_interrupt(void)
 {
   IFS0bits.T1IF = 0;
   global_tick   += 1;
 }
+#endif
 
 #if (TIMER_2_ENABLED == 1)
 void __attribute__((weak)) timer_2_callback(void)
 {
+    IFS0bits.T1IF = 0;
+  global_tick   += 1;
 }
 
 void __attribute__((vector(_TIMER_2_VECTOR), interrupt(ipltmr2AUTO),

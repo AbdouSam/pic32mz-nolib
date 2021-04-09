@@ -1,5 +1,5 @@
-#ifndef MICROPY_INCLUDED_PIC32BIT_CONFIG_H
-#define MICROPY_INCLUDED_PIC32BIT_BOARD_H
+#ifndef PIC32_CONFIG_H
+#define PIC32_CONFIG_H
 
 /*64, 100, 124, 144 */
 #define PIC32_PIN_COUNT             144
@@ -14,8 +14,8 @@
 /* GPIO: INPUT, OUTPUT */
 
 #if (PIC32_PIN_COUNT != 64)
-#define GPIO_RA0                    PIC32_GPIO_INPUT
-#define GPIO_RA1                    PIC32_GPIO_INPUT
+#define GPIO_RA0                    PIC32_GPIO_OUTPUT
+#define GPIO_RA1                    PIC32_GPIO_OUTPUT
 #define GPIO_RA2                    PIC32_GPIO_INPUT
 #define GPIO_RA3                    PIC32_GPIO_INPUT
 #define GPIO_RA4                    PIC32_GPIO_INPUT
@@ -85,8 +85,8 @@
 #define GPIO_RE6                    PIC32_GPIO_INPUT
 #define GPIO_RE7                    PIC32_GPIO_INPUT
 #if (PIC32_PIN_COUNT != 64)
-#define GPIO_RE8                    PIC32_GPIO_INPUT
-#define GPIO_RE9                    PIC32_GPIO_INPUT
+#define GPIO_RE8                    PIC32_GPIO_OUTPUT
+#define GPIO_RE9                    PIC32_GPIO_OUTPUT
 #endif
 
 #define GPIO_RF0                    PIC32_GPIO_INPUT
@@ -127,7 +127,7 @@
 #endif
 #define GPIO_RH4                    PIC32_GPIO_INPUT
 #define GPIO_RH5                    PIC32_GPIO_INPUT
-#define GPIO_RH6                    PIC32_GPIO_INPUT
+#define GPIO_RH6                    PIC32_GPIO_OUTPUT
 #if (PIC32_PIN_COUNT != 124)
 #define GPIO_RH7                    PIC32_GPIO_INPUT
 #endif
@@ -215,6 +215,4 @@
 #define PIC32_UART_4_RX_PIN         pinB14
 #define PIC32_UART_4_TX_PIN         pinF12
 
-#define UART_ATTACHED_TO_REPL       PIC32_UART_4
-
-#endif /* MICROPY_INCLUDED_PIC32BIT_BOARD_H */
+#endif /* PIC32_CONFIG_H */

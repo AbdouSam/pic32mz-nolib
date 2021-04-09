@@ -5,8 +5,9 @@
  */
 #include <stdbool.h>
 
+#include "FreeRTOS.h"
+#include "FreeRTOSConfig.h"
 #include <xc.h>
-
 #include "pic32_config.h"
 #include "uart.h"
 #include "sysclk.h"
@@ -17,6 +18,8 @@
 #include "interrupt.h"
 #include "i2c.h"
 #include "rtc.h"
+#include "task.h"
+#include "semphr.h"
 
 /* This define is to set the  µC to run on internal clock
  * config is set to run CPU at 200 Mhz,
@@ -100,6 +103,18 @@
 #pragma config TSEQ =       0x0000
 #pragma config CSEQ =       0xffff
 
+
+/* USer defines */
+
+#define LED_RED_YELLOW  pinH6
+#define LED_RED_RED     pinB13
+#define LED_RED_ORANGE  pinB12
+#define LED_RED_GREEN   pinA1
+#define RS485_1_PIN     pinA10
+#define RELAY_OUTPUT_1  pinE9
+#define RELAY_OUTPUT_2  pinE8
+#define RELAY_OUTPUT_3  pinA0
+
 extern unsigned int global_tick;
 static bool wdt_clear_flag = true;
 
@@ -131,37 +146,136 @@ static char read_char(void)
 
 void timer_2_callback(void)
 {
-  gpio_state_toggle(pinB13);
+  gpio_state_toggle(LED_RED_ORANGE);
   wdt_clear_flag = true;
 }
 
+static  char          c;
+void __attribute__((vector(_UART4_RX_VECTOR), interrupt(ipl2AUTO),
+                         nomips16)) _uart_4_interrupt(void)
+{
+  gpio_state_toggle(LED_RED_GREEN);
+      c = read_char();
+
+  IFS5bits.U4RXIF = 0;  
+}
+
+static char relay_list[3] = 
+{
+  RELAY_OUTPUT_1,
+  RELAY_OUTPUT_2,
+  RELAY_OUTPUT_3,
+};
+
+static unsigned int  millis = 0;
+static SemaphoreHandle_t   semstart;
+static QueueHandle_t queuoutput;
+
+
+static void heartbeat(void)
+{
+    for (;; )
+    {
+
+      /* test read the uart */
+      c = read_char();
+      if (c == 'x')
+        {
+          if (xSemaphoreGive(semstart) == pdFALSE)
+          {
+            print_str("Give Failed.\n");
+          }
+          c = 0;
+        }
+      if (c == 'o')
+        {
+          c = read_char();
+
+          if (xQueueSend(queuoutput, &c, pdMS_TO_TICKS(200)) == pdFALSE)
+          {
+            print_str("Queue send Failed.\n");
+          }
+
+          c = 0;
+        }
+      else if (c == '\n')
+        {
+          print_str("Line Feed.\n");
+          c = 0;
+        }
+
+      if (wdt_clear_flag)
+      {
+        wdt_clear_flag = false;
+        wdt_clear();
+      }
+
+      vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
+static void togglerelay(void)
+{
+    for (;; )
+    {
+
+      /* test read the uart */
+      if (xSemaphoreTake(semstart, pdMS_TO_TICKS(3000)))
+      {
+        gpio_state_toggle(LED_RED_RED);
+      }
+      else
+      {
+        gpio_state_toggle(LED_RED_YELLOW);
+      }
+    }
+}
+
+static void activaterelay(void)
+{
+    for (;; )
+    {
+      char ctemp;
+
+      /* test read the uart */
+      if (xQueueReceive(queuoutput, &ctemp, portMAX_DELAY))
+      {
+        if (ctemp - 48 < 3)
+        {
+          gpio_state_toggle(relay_list[ctemp-48]);
+        }
+      }
+    }
+}
 
 int main(void)
 {
-  char          c;
-  unsigned char value[7];
-  unsigned int  millis = interrupt_tick_get();
+  millis = interrupt_tick_get();
 
   sysclk_init();
 
   gpio_init();
 
-  gpio_state_set(pinB12, true);
-  gpio_state_set(pinB13, true);
-
+  gpio_state_set(LED_RED_ORANGE, true);
+  gpio_state_set(LED_RED_RED, true);
+  gpio_state_set(RS485_1_PIN, true);
+  gpio_state_set(RELAY_OUTPUT_1, true);
+  
   /* For the interrupt */
-
-  init_timer1(1000, TMR_PRESCALE_1, 0);
-
-  /* use it to clear watchdog. */
   init_timer2(1, TMR_PRESCALE_256, 0);
 
   interrupt_init();
 
   delay_ms(1000);
 
-  /* Set rs485 bit to output (we use a max485 to interface uart) */
-  gpio_state_set(pinA10, true);
+  // interrupt for reception
+  #if 0
+  IPC42bits.U4RXIP  = 2;
+  IPC42bits.U4RXIS  = 0;
+  U4STAbits.URXISEL = IF_RBUF_NOT_EMPTY;
+  IEC5bits.U4RXIE   = 1;
+  IFS5bits.U4RXIF   = 0; 
+  #endif
 
   uart_init(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
 
@@ -170,39 +284,22 @@ int main(void)
   i2c_init(100000);
 
   rtc_init();
+  semstart = xSemaphoreCreateBinary();
+  queuoutput = xQueueCreate(1, sizeof(char));
 
-  for (;; )
-    {
+  /* create all tasks */
+  xTaskCreate((TaskFunction_t)heartbeat, "HB", 1024, NULL, 2, NULL);
 
-      if (interrupt_tick_get() - millis >= 500)
-        {
-          /* test timer/interrupt/gpio */
-          gpio_state_toggle(pinB12);
+  xTaskCreate((TaskFunction_t)togglerelay, "TGL", 1024, NULL, 2, NULL);
 
-          millis = interrupt_tick_get();
+  xTaskCreate((TaskFunction_t)activaterelay, "RA", 1024, NULL, 1, NULL);
 
-          /* test read rtc/ i2c */
-          rtc_read_time(value);
-        }
+  vTaskStartScheduler();
 
-      /* test read the uart */
-      c = read_char();
+  /* start scheduler */
 
-      if (c == 'x')
-        {
-          print_str("X is pressed.\n");
-        }
-      else if (c == '\n')
-        {
-          print_str("Line Feed.\n");
-        }
-
-      if (wdt_clear_flag)
-      {
-        wdt_clear_flag = false;
-        wdt_clear();
-      }
-    }
+  /* */
+  for(;;){}
 
   return 0;
 }

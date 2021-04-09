@@ -5,8 +5,8 @@
  */
 #include <stdbool.h>
 
-#include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
+#include "FreeRTOS.h"
 #include <xc.h>
 #include "pic32_config.h"
 #include "uart.h"

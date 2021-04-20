@@ -23,6 +23,13 @@ CSRCS = main.c \
         rtc.c \
         app.c \
         debug.c \
+        rtc_controller.c \
+        adc_controller.c \
+        dio.c \
+        pivot21.c \
+
+OBJ_SYS_TMR = $(OBJ_DIR)/sys_tmr.o
+SRC_SYS_TMR = $(SRC_DIR)/system/tmr/sys_tmr.c
 
 SRC_C = $(addprefix $(SRC_DIR)/, $(CSRCS))
 OBJS  = $(addprefix $(OBJ_DIR)/, $(CSRCS:.c=.o))
@@ -56,7 +63,11 @@ $(BIN_DIR)/firmware.elf: $(OBJS)
 	@echo "LINK $@"
 	@$(CROSS_COMPILE)gcc $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/$(CFG_FILE) $(shell mkdir -p $(OBJ_DIR))
+$(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/$(CFG_FILE) $(OBJ_SYS_TMR) $(shell mkdir -p $(OBJ_DIR))
+	@echo "Compile $< to get $@"
+	@$(CROSS_COMPILE)gcc -c -x c $(CFLAGS) $< -o $@  $(LIBS)
+
+$(OBJ_SYS_TMR): $(SRC_SYS_TMR)
 	@echo "Compile $< to get $@"
 	@$(CROSS_COMPILE)gcc -c -x c $(CFLAGS) $< -o $@  $(LIBS)
 
@@ -64,6 +75,7 @@ $(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/$(CFG_FILE) $(shell mkdir -p 
 
 clean:
 	@rm -f $(OBJS)
+	@rm -f $(OBJ_SYS_TMR)
 	@rm -f $(BIN_DIR)/firmware.hex $(BIN_DIR)/firmware.elf $(BIN_DIR)/firmware.map
 	@echo "Cleanup complete."
 

@@ -25,8 +25,11 @@
 #define STATE_PROB   6 // to indicates some issues and stop the program
 #define STATE_START  7 // to manage between irrigation and movement
 #define STATE_MAN    8 // to enter the manual mode
+#define STATE_MEH   (19) // to enter the manual mode
+
 #define TMAX         (80)  // reading the max value of the sensor
 #define TMIN         (-20)   // reading the min value OF THE SENSOR
+
 // Digital Outputs
 #define MOTOR       0   // signal to turn on the motor
 #define WATER       1   // signal to the pompe 
@@ -286,7 +289,7 @@ app_dbg_msg("Read temperature and humidity \n ");
        check_water();
 
     // turn on the right LED that indicates the type of error
-      state = STATE_STOP; 
+      state = STATE_MEH; 
       start_timer_mov = true;
       break;
      // stop because of issues 

@@ -89,8 +89,8 @@ printfiles:
 
 program: all
 	@sleep 1
-	@python tools/programmer.py -i udp -a 192.168.1.60 -e
+	@python3 tools/programmer.py -i udp -a 192.168.1.60 -e
 	@sleep 1
-	@python tools/programmer.py -i udp -a 192.168.1.60 -u build/release/firmware.hex
+	@python3 tools/programmer.py -i udp -a 192.168.1.60 -u build/release/firmware.hex
 	@sleep 1
-	@python tools/programmer.py -i udp -a 192.168.1.60 -r
+	@python3 tools/programmer.py -i udp -a 192.168.1.60 -r

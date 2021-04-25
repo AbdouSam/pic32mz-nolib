@@ -53,22 +53,69 @@ static bool pelec;
 static bool pmotor;
 static bool pwater;
 static bool eco ;
+static bool start_timer_mov = true ;
 static rtc_clock curr_clock;
+static uint32_t time_on = 5000;
 
 void stp_timer_cb(void)
 {
   state = STATE_STOP;
-
-  /*
-  int hr = curr_clock.time.hour;
-  if (hr >= 22 || hr <= 5)
-  {
-  } 
-  */
+  app_dbg_msg("Time is up \n ");
 }
+
+void check_water()
+{
+  if (pwater == true )
+  {
+     dio_turnon(OUTWATER) ;
+     app_dbg_msg("Water problem \n ");
+   }
+   else {
+     dio_turnoff(OUTWATER);
+   }
+
+
+}
+void check_motor()
+{
+      if (pmotor== true)
+       {
+     dio_turnon(OUTMOTOR) ;
+     app_dbg_msg("MOTOR problem \n ");
+       }
+      else{ 
+     dio_turnoff(OUTMOTOR);
+
+          }
+}
+void check_elec()
+{
+      if ( pelec == true)
+      {
+     dio_turnon(OUTELEC) ;
+      app_dbg_msg("Elec problem \n ");
+      }
+      else
+      { 
+     dio_turnoff(OUTELEC);
+       }
+}
+void check_pos()
+{
+     if (ppos== true )
+     {
+     dio_turnon(OUTPOS) ;
+    app_dbg_msg("obstacle\n ");
+    }
+      else
+      { 
+     dio_turnoff(OUTPOS);
+      }
+}
+
 void gethum (void)
 {
-  int Dhum ;
+  uint16_t Dhum ;
 
 // Read humidity
   adc_controller_readadc(HUM, &Dhum);
@@ -76,10 +123,10 @@ void gethum (void)
 }
 void gettemp(void)
 {
-  int Dtemp ;
+  uint16_t Dtemp ;
 
   // Read temperature
-  adc_controller_readadc(TEMP, &temp);
+  adc_controller_readadc(TEMP, &Dtemp);
   temp = (Dtemp * TMAX / 4095) + TMIN ;
 }
 
@@ -91,9 +138,10 @@ void pivot21_init(void)
 void pivot21_task(void)
 { 
  
+
   gettemp() ;
   gethum() ;
-
+app_dbg_msg("Read temperature and humidity \n ");
   // read state of manual/auto button
   bool man_state = dio_read(MAN_M);
 
@@ -103,10 +151,11 @@ void pivot21_task(void)
   pelec  = dio_read(INELEC);
   pwater = dio_read(INWATER);
   eco    = dio_read(ECO) ;
+  app_dbg_msg("Check problems \n ");
   // Read current clock from RTC
   rtc_controller_getclock(&curr_clock);
 
-  if ((man_state==true )&& (state==STATE_MAN))
+   if ((man_state==true )&& (state==STATE_MAN))
     {
      state=STATE_MAN ;
     }
@@ -117,31 +166,41 @@ void pivot21_task(void)
     state = STATE_STOP;
   }
 }
-  if (ppos== true || pmotor== true || pwater== true || pelec == true) // indicating a problem
+ if (ppos== true || pmotor== true || pwater== true || pelec == true) // indicating a problem
   {
     state = STATE_PROB ;
+  }
+  else
+  {
+    dio_turnoff(OUTPOS);
+    dio_turnoff(OUTWATER);
+    dio_turnoff(OUTELEC) ;
+    dio_turnoff(OUTMOTOR) ;
+
   }
 
   switch (state)
   {
     case STATE_INIT :
     {
-      app_dbg_msg("I am in initial mode");
+
+      app_dbg_msg("I am in initial mode \n");
       //dio_turnon(4);
       //SYS_TMR_CallbackSingle (3000, 0, stp_timer_cb); to schedule  time operation
       //dio_turnoff(5);
-      if (eco == true)
+
+ if (eco == true)
       {
         state= STATE_ECO ; // enter the economic mode
       }
-      else
-      {
-        state= STATE_NORMAL ; // enter the normal mode      }
+      else {
+        state= STATE_NORMAL ; }
+        // enter the normal mode      
       break;
     }
     case STATE_ECO :
     {
-      app_dbg_msg("I am in eco mode");
+      app_dbg_msg("I am in eco mode\n");
   int hr = curr_clock.time.hours;  // put variable hr equal to the actual hour (ask Abdallah)
   if (hr >= 22 || hr <= 5)
   {
@@ -151,7 +210,6 @@ void pivot21_task(void)
   {
    state = STATE_STOP; // enter the stop state to stop the program 
   }
-
       break;
   }
     
@@ -166,7 +224,6 @@ void pivot21_task(void)
   else {
     state=STATE_STOP ; // enter the stop state to stop the program 
   }
-
       break;
     }
       case STATE_STOP :
@@ -180,14 +237,25 @@ void pivot21_task(void)
         state = STATE_MAN ;
       // Enter the manual mode  
       }
-      
+      else
+      {
+      state= STATE_INIT ;
+      }
       break;
       // to stop or enter the manual mode
     }
         case STATE_START :  
-    {
-      app_dbg_msg("I am istarting to move");
-        state = STATE_MOV ;
+    {   
+      app_dbg_msg("I am starting to move");
+      if (start_timer_mov == true)//we can remove the true when the variable is bool
+      {
+        start_timer_mov = false;
+        SYS_TMR_CallbackSingle (time_on, 0, stp_timer_cb);
+         //to schedule  time operation
+        app_dbg_msg("the timer is started");
+      }
+
+      state = STATE_MOV ;
       break;
       // start movement and irrigation
     }
@@ -204,30 +272,34 @@ void pivot21_task(void)
     {
       dio_turnon(WATER);
       app_dbg_msg("I am irigating");
+
+      state= STATE_INIT ;
       break;
       // start irrigation
     }
         case STATE_PROB :
     {
       app_dbg_msg("I have a problem");
-      if (ppos== true )
-     dio_turnon(OUTPOS) ;
-      if (pmotor== true) 
-     dio_turnon(OUTMOTOR) ;
-      if (pwater== true )
-     dio_turnon(OUTWATER) ;
-      if ( pelec == true)
-     dio_turnon(OUTELEC) ;
+       check_pos()  ;
+       check_elec() ;
+       check_motor();
+       check_water();
+
     // turn on the right LED that indicates the type of error
-     state = STATE_STOP; 
+      state = STATE_STOP; 
+      start_timer_mov = true;
       break;
      // stop because of issues 
     }
         case STATE_MAN :
     {
-      app_dbg_msg("I am in manual mode");
       if (man_state == false)
+      {
         state= STATE_INIT ;
+      }
+      else{
+        app_dbg_msg("I am in manual mode");
+      }
       break ;
       // MAnual we do nothing
     }
@@ -237,5 +309,4 @@ void pivot21_task(void)
       break;
     }
   }
-}
 }

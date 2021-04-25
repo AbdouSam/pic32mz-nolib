@@ -3,6 +3,8 @@
 #include "adc_controller.h"
 #include "system/tmr/sys_tmr.h"
 #include "rtc_controller.h"
+#include "debug.h"
+
 // we have to include libraries 
 //constants 
 
@@ -23,6 +25,8 @@
 #define STATE_PROB   6 // to indicates some issues and stop the program
 #define STATE_START  7 // to manage between irrigation and movement
 #define STATE_MAN    8 // to enter the manual mode
+#define TMAX         (80)  // reading the max value of the sensor
+#define TMIN         (-20)   // reading the min value OF THE SENSOR
 // Digital Outputs
 #define MOTOR       0   // signal to turn on the motor
 #define WATER       1   // signal to the pompe 
@@ -33,6 +37,7 @@
 // Analog Inputs
 #define TEMP        0     // reading from temperature sensure 
 #define HUM         1     // reading from humidity sensure
+
 
 // add 2 more relays for marche avant , arriere
 // we make sure we switch one off to open the other
@@ -61,6 +66,22 @@ void stp_timer_cb(void)
   } 
   */
 }
+void gethum (void)
+{
+  int Dhum ;
+
+// Read humidity
+  adc_controller_readadc(HUM, &Dhum);
+  hum = Dhum*100/4095 ;
+}
+void gettemp(void)
+{
+  int Dtemp ;
+
+  // Read temperature
+  adc_controller_readadc(TEMP, &temp);
+  temp = (Dtemp * TMAX / 4095) + TMIN ;
+}
 
 void pivot21_init(void)
 {
@@ -69,11 +90,9 @@ void pivot21_init(void)
 
 void pivot21_task(void)
 { 
-  // Read temperature
-  adc_controller_readadc(TEMP, &temp);
-  
-  // Read humidity
-  adc_controller_readadc(HUM, &hum);
+ 
+  gettemp() ;
+  gethum() ;
 
   // read state of manual/auto button
   bool man_state = dio_read(MAN_M);
@@ -107,6 +126,7 @@ void pivot21_task(void)
   {
     case STATE_INIT :
     {
+      app_dbg_msg("I am in initial mode");
       //dio_turnon(4);
       //SYS_TMR_CallbackSingle (3000, 0, stp_timer_cb); to schedule  time operation
       //dio_turnoff(5);
@@ -116,12 +136,12 @@ void pivot21_task(void)
       }
       else
       {
-        state= STATE_NORMAL ; // enter the normal mode
-      }
+        state= STATE_NORMAL ; // enter the normal mode      }
       break;
     }
     case STATE_ECO :
     {
+      app_dbg_msg("I am in eco mode");
   int hr = curr_clock.time.hours;  // put variable hr equal to the actual hour (ask Abdallah)
   if (hr >= 22 || hr <= 5)
   {
@@ -131,12 +151,14 @@ void pivot21_task(void)
   {
    state = STATE_STOP; // enter the stop state to stop the program 
   }
+
       break;
   }
     
        case STATE_NORMAL :
     {
       // time 
+      app_dbg_msg("I am in normal mode");
       if ((hum< 50 && temp < 27 )||(hum< 20 && temp > 40 )) 
   {
     state=STATE_START ; // enter the start state to start the process of irrigation
@@ -149,6 +171,7 @@ void pivot21_task(void)
     }
       case STATE_STOP :
     {
+      app_dbg_msg("I am stopped");
       dio_turnoff(MOTOR);
       dio_turnoff(WATER);
       // Turn off the pivot
@@ -163,12 +186,14 @@ void pivot21_task(void)
     }
         case STATE_START :  
     {
+      app_dbg_msg("I am istarting to move");
         state = STATE_MOV ;
       break;
       // start movement and irrigation
     }
         case STATE_MOV :
     { 
+      app_dbg_msg("I am moving");
       dio_turnon(MOTOR);
       state = STATE_IRRIG ;
       break;
@@ -178,11 +203,13 @@ void pivot21_task(void)
         case STATE_IRRIG :
     {
       dio_turnon(WATER);
+      app_dbg_msg("I am irigating");
       break;
       // start irrigation
     }
         case STATE_PROB :
     {
+      app_dbg_msg("I have a problem");
       if (ppos== true )
      dio_turnon(OUTPOS) ;
       if (pmotor== true) 
@@ -198,6 +225,7 @@ void pivot21_task(void)
     }
         case STATE_MAN :
     {
+      app_dbg_msg("I am in manual mode");
       if (man_state == false)
         state= STATE_INIT ;
       break ;
@@ -209,4 +237,5 @@ void pivot21_task(void)
       break;
     }
   }
+}
 }

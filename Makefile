@@ -82,7 +82,8 @@ clean:
 
 # watchout, this routine uncrustify all files in src directory
 uncrustify:
-	@uncrustify -c uncrustify.cfg --no-backup src/* --suffix
+	@uncrustify -c uncrustify_deo.cfg --no-backup src/*.c --suffix
+	@uncrustify -c uncrustify_deo.cfg --no-backup src/*.h --suffix
 
 printfiles:
 	@echo "src files: $(SRC_C)"

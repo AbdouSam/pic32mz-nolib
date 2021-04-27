@@ -106,10 +106,10 @@
 static char          c_tmp;
 static char          rx_tmp[10];
 static int           rx_index = 0;
-static unsigned char rtc_val[7];
-static unsigned int  millis = 0;
+//static unsigned char rtc_val[7];
+//static unsigned int  millis = 0;
 static bool          wdt_clear_flag = true;
-
+int timenow ;
 static void wdt_clear(void)
 {
   volatile uint16_t * wdtclrkey;
@@ -162,13 +162,20 @@ void uart_callback(void)
   }
 }
 
-int app_init(void)
-{
+pic32_pin_t relaysoutput [8]={RELAY_OUT1,RELAY_OUT2,RELAY_OUT3,
+RELAY_OUT4,RELAY_OUT5,RELAY_OUT6,RELAY_OUT7,RELAY_OUT8};
 
+int app_init(void)
+{ timenow=interrupt_tick_get();
+int i=0;
   sysclk_init();
 
   /* Initial IO as it is set in pic32_config.h */
   gpio_init();
+for (i=0;i<8;i++)
+{
+gpio_state_set(relaysoutput[i]);
+}
 
   gpio_state_clear(LED_ORANGE);
   gpio_state_clear(LED_RED);
@@ -184,55 +191,42 @@ int app_init(void)
   init_timer2(1, TMR_PRESCALE_256, 0);
 
   delay_ms(100);
-
-  uart_rxi_set(PIC32_UART_4, 3, IF_RBUF_NOT_EMPTY, uart_callback);
   
   uart_init(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
 
   print_str("Hello World\n");
 
-  i2c_init(100000);
-
-  rtc_init();
 
   interrupt_init();
 
   return 0;
 }
 
+int diff;
 void app_task(void)
 {
-  int c_local;
 
-  if (interrupt_tick_get() - millis >= 500)
-    {
-      /* test timer/interrupt/gpio */
-      gpio_state_toggle(LED_ORANGE);
-
-      millis = interrupt_tick_get();
-
-      /* test read rtc/ i2c */
-      rtc_read_time(rtc_val);
+static int i=0;
+static int j=7;
+diff=interrupt_tick_get() - timenow;
+  if (diff>=1000)
+{timenow=interrupt_tick_get();
+  if(i<8){
+  
+gpio_state_toggle(relaysoutput[i]);
+i++;
+    }
+    else{
+      gpio_state_toggle(relaysoutput[j]);
+    j--;
     }
 
+    if(j<0){i=0;j=7;}
+    
+}
   /* test read the uart */
 
-  if ((c_tmp >= 'a') && (c_tmp <= 'z'))
-    {
-      uart_tx_char(PIC32_UART_4, c_tmp);
-      uart_tx_char(PIC32_UART_4, '\n');
-      c_tmp = 0;
-    }
 
-  if (c_tmp == '\n')
-    {
-      print_str("Word: ");
-      for (c_local = 0; c_local<10; c_local++)
-        uart_tx_char(PIC32_UART_4, rx_tmp[c_local]);
-      
-      uart_tx_char(PIC32_UART_4, '\n');
-      c_tmp = 0;
-    }
 
   if (wdt_clear_flag)
   {

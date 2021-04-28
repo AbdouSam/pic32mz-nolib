@@ -2,6 +2,26 @@
 
 A minimal source code to start working with pic32mz, without the use of any library (no Harmony).
 
+## toolchain
+
+- install mplab xc32 version less than or equaul to 2.15 (<= v2.15) and add xc32 bin directory it to PATH
+- install make and add it to PATH
+- install Git
+- if python tools are used install python 3 and add it to PATH
+
+**IMPORTANT NOTE FOR LINUX x64 MACHINE**
+
+- on linux **before** installing xc32 you must install dependencies (lib32) to be able to install it, otherwise it won't work. 
+
+```sh
+# For Ubuntu
+sudo apt-get install libc6:i386 libx11-6:i386 libxext6:i386 libstdc++6:i386 libexpat1:i386
+
+# For Fedora
+sudo dnf install libX11.i686 libXext.i686 libgcc.i686 libstdc++.i686 expat.i686
+```
+- For more infos go to https://microchipdeveloper.com/install:mplabx-lin64
+
 ## configuration
 
 Before start, make sure to adjust the pic32_config.h header file.

@@ -60,14 +60,16 @@ static bool eco ;
 static bool start_timer_mov = true ; /* this should be connected to a bool pin */
 static rtc_clock curr_clock;
 static bool state_entery = true ;
-static uint32_t time_on = 20000;
+//static uint32_t time_on = 20;
 static uint32_t time_irrig = 5000;
 static uint32_t time_move = 5000;
 static uint32_t start_time;
 static uint32_t curr_time;
 static bool read_start_time = true ;
 static int time_cond;
-
+static bool init_cond = true;
+static SYS_TMR_HANDLE time_move_handle;
+static SYS_TMR_HANDLE time_irrig_handle;
 
 
 
@@ -77,19 +79,37 @@ void set_state (int st)
   state_entery = true;
 }
 
-void irrig_done (void)
+void irrig_done ( uintptr_t context, uint32_t currTick )
 {
-  set_state(STATE_MOV);
-  app_dbg_msg("I am done irrigating! \n ");
-}
+      if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= 20) )
+    {
+         
+        set_state(STATE_MOV);
+        app_dbg_msg("I am done irrigating! \n ");
+    }
+    else {
+      app_dbg_msg("stop time is up irrig \n ");
+      set_state(STATE_STOP ); /* enter the stop state to stop the program */
+    }
 
-void disp_done (void)
-{
+}
+void disp_done ( uintptr_t context, uint32_t currTick )
+{ 
+    if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= 20) )
+    {
+
   set_state(STATE_IRRIG);
   app_dbg_msg("I am done moving! \n ");
+    }
+    else {
+       app_dbg_msg("stop time is up mooove \n ");
+      set_state(STATE_STOP ); /* enter the stop state to stop the program */
+    }
+
+
 }
 
-void stp_timer_cb(void)
+void stp_timer_cb( uintptr_t context, uint32_t currTick )
 {
   set_state(STATE_STOP);
   app_dbg_msg("Time is up \n ");
@@ -164,14 +184,12 @@ void gettemp(void)
 void pivot21_init(void)
 {
   set_state(STATE_INIT);
-  curr_time = 0 ;
-  start_time = 0 ;
+  curr_time = 0;
+  start_time = 0;
 }
 
 void pivot21_task(void)
 {
-
- /* curr_time += 500; /*time increments with 500ms*/
 
   gettemp() ;
   gethum() ;
@@ -188,36 +206,38 @@ void pivot21_task(void)
 
   app_dbg_msg("Check problems \n ");
   /* Read current clock from RTC*/
-  rtc_controller_getclock(&curr_clock);
+  app_dbg_msg("reading current time \n");
+  curr_time =  rtc_controller_gettime(); 
+  app_dbg_msg("current_time is %d",curr_time);
 
-  if ((man_state == true ) && (state == STATE_MAN))
-  {
-    set_state(STATE_MAN );
-  }
-  else
-  {
+    /* time */
+    app_dbg_msg("I am checking the time interval\n");
+    time_cond = curr_time - start_time; // time interval
+     app_dbg_msg("time condtion is %d",time_cond);
+    rtc_controller_getclock(&curr_clock); 
+ /* curr_time += 500; time increments with 500ms*/
+    if (eco == true)
+    {
+      app_dbg_msg(" ECO  TEST IF true\n");
+      set_state( STATE_ECO ); /* enter the economic mode*/
+    }
     if (man_state == true ) /* manual mode or automatic mode*/
     {
       set_state(STATE_STOP);
     }
-  }
-  if (ppos == true || pmotor == true || pwater == true || pelec == true) /* indicating a problem*/
+    if (ppos == true || pmotor == true || pwater == true || pelec == true) /* indicating a problem*/
   {
     set_state(STATE_PROB);
   }
-  else
+    else
   {
     dio_turnoff(OUTPOS);
     dio_turnoff(OUTWATER);
     dio_turnoff(OUTELEC) ;
     dio_turnoff(OUTMOTOR) ;
-
   }
-
   switch (state)
   {
-
-
   case STATE_INIT :
   {
     if (state_entery)
@@ -230,12 +250,7 @@ void pivot21_task(void)
     /*SYS_TMR_CallbackSingle (3000, 0, stp_timer_cb); to schedule  time operation*/
     /*dio_turnoff(5);*/
 
-    if (eco == true)
-    {
-      app_dbg_msg(" ECO  TEST IF true\n");
-      set_state( STATE_ECO ); /* enter the economic mode*/
-    }
-    else
+    if (eco == false )
     {
       set_state( STATE_NORMAL );
     }
@@ -267,18 +282,26 @@ void pivot21_task(void)
 
   case STATE_NORMAL :
   {
+
     if (state_entery)
     {
       state_entery = false;
       app_dbg_msg("I am in normal mode\n");
+
     }
-    /* time */
-    app_dbg_msg("I am checking the time interval\n");
-    time_cond = curr_time - start_time; // time interval
-    if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= time_on) )
+
+    if (init_cond)
+    {
+      init_cond = false;
+      curr_time = start_time;
+      time_cond = curr_time - start_time;
+      app_dbg_msg("START TIME IS CURRENT TIME\n");
+      
+    }
+    if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 )) && (time_cond <= 20))
     {
 
-      set_state(STATE_START ); /* enter the start state to start the process of irrigation*/
+      set_state(STATE_START); /* enter the start state to start the process of irrigation*/
     }
     else {
       set_state(STATE_STOP ); /* enter the stop state to stop the program */
@@ -292,12 +315,15 @@ void pivot21_task(void)
       state_entery = false;
       app_dbg_msg("I am stopped\n");
     }
+    SYS_TMR_CallbackStop ( time_move_handle );
+    SYS_TMR_CallbackStop ( time_irrig_handle );
     dio_turnoff(MOTOR);
     dio_turnoff(WATER);  /* Turn off the pivot*/
-      app_dbg_msg("I am stopped\n");
+    app_dbg_msg("I am stopped\n");
+    init_cond = true;
     if (man_state == true)
     {
-      set_state(STATE_MAN ); /* Enter the manual mode  */
+      set_state(STATE_STOP); /* Enter the manual mode  */
     }
     else
     {
@@ -316,22 +342,20 @@ void pivot21_task(void)
        {
         read_start_time = false ;
         app_dbg_msg("reading the start time \n");
-        start_time = curr_clock.time.seconds;
+        start_time = rtc_controller_gettime();
+         app_dbg_msg("start_time is %d", start_time);
        }
-    app_dbg_msg("reading current time \n");
-    curr_time =  curr_clock.time.seconds; 
 
     if (start_timer_mov == true)/*we can remove the true when the variable is bool*/
     {
       start_timer_mov = false;
 
-      rtc_controller_getclock(&curr_clock);
-
-      SYS_TMR_CallbackSingle (time_on, 0, stp_timer_cb);
+      //SYS_TMR_CallbackSingle (time_on, 0, stp_timer_cb);
       /*to schedule  time operation*/
       app_dbg_msg("the timer is started\n");
+      set_state(STATE_MOV );
     }
-    set_state(STATE_MOV );
+  
     break;
     /* start movement and irrigation*/
   }
@@ -342,7 +366,7 @@ void pivot21_task(void)
       state_entery = false;
       app_dbg_msg("I am moving\n");
       dio_turnon(MOTOR);
-      SYS_TMR_CallbackSingle (time_move, 0 , disp_done ); /*the pivot is done displacing*/
+     time_move_handle =  SYS_TMR_CallbackSingle (time_move, 0 , disp_done ); /*the pivot is done displacing*/
     }
     /*state = STATE_IRRIG ; <== removed*/
     /* we need to take in cosideration that angle it moves with, if we don't we would be working with only one stick!!*/
@@ -357,7 +381,7 @@ void pivot21_task(void)
       state_entery = false;
       dio_turnon(WATER);
       app_dbg_msg("I am irigating\n");
-      SYS_TMR_CallbackSingle (time_irrig, 0 , irrig_done ); /*the pivot is done irrigating*/
+      time_irrig_handle = SYS_TMR_CallbackSingle (time_irrig, 0 , irrig_done ); /*the pivot is done irrigating*/
     }
     break;
     /* start irrigation*/
@@ -372,27 +396,15 @@ void pivot21_task(void)
       check_elec() ;
       check_motor();
       check_water();
+      dio_turnoff(MOTOR);
+      dio_turnoff(WATER);
+      SYS_TMR_CallbackStop ( time_move_handle );
+      SYS_TMR_CallbackStop ( time_irrig_handle );
       /* turn on the right LED that indicates the type of error*/
       set_state(STATE_MEH);
     }
     break;
     /* stop because of issues */
-  }
-  case STATE_MAN :
-  {
-    if (man_state == false)
-    {
-      set_state( STATE_INIT );
-    }
-    else {
-      if (state_entery)
-      {
-        app_dbg_msg("I am in manual mode\n");
-        state_entery = false;
-      }
-    }
-    break ;
-    /* MAnual we do nothing*/
   }
 
   default :

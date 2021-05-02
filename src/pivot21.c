@@ -60,18 +60,39 @@ static bool eco ;
 static bool start_timer_mov = true ; /* this should be connected to a bool pin */
 static rtc_clock curr_clock;
 static bool state_entery = true ;
-//static uint32_t time_on = 20;
+static uint32_t time_on = 20;
 static uint32_t time_irrig = 5000;
 static uint32_t time_move = 5000;
 static uint32_t start_time;
 static uint32_t curr_time;
 static bool read_start_time = true ;
 static int time_cond;
-static bool init_cond = true;
+static bool init_cond = false;
 static SYS_TMR_HANDLE time_move_handle;
 static SYS_TMR_HANDLE time_irrig_handle;
 
 
+
+/***********************************************
+ * 
+ ***********************************************/
+int pivot21_enable(void)
+{
+  init_cond = true;
+  return 0;
+}
+
+int pivot21_disable(void)
+{
+  init_cond = false;
+  return 0;
+}
+
+int pivot21_set_timeon(int t)
+{
+  time_on = t;
+  return 0;
+}
 
 void set_state (int st)
 {
@@ -81,7 +102,9 @@ void set_state (int st)
 
 void irrig_done ( uintptr_t context, uint32_t currTick )
 {
-      if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= 20) )
+      dio_turnoff(WATER) ;
+
+      if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= time_on) )
     {
          
         set_state(STATE_MOV);
@@ -95,7 +118,8 @@ void irrig_done ( uintptr_t context, uint32_t currTick )
 }
 void disp_done ( uintptr_t context, uint32_t currTick )
 { 
-    if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= 20) )
+     dio_turnoff(MOTOR) ;
+    if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= time_on) )
     {
 
   set_state(STATE_IRRIG);
@@ -225,17 +249,19 @@ void pivot21_task(void)
     {
       set_state(STATE_STOP);
     }
+
     if (ppos == true || pmotor == true || pwater == true || pelec == true) /* indicating a problem*/
-  {
-    set_state(STATE_PROB);
-  }
+    {
+      set_state(STATE_PROB);
+    }
     else
-  {
-    dio_turnoff(OUTPOS);
-    dio_turnoff(OUTWATER);
-    dio_turnoff(OUTELEC) ;
-    dio_turnoff(OUTMOTOR) ;
-  }
+    {
+      dio_turnoff(OUTPOS);
+      dio_turnoff(OUTWATER);
+      dio_turnoff(OUTELEC) ;
+      dio_turnoff(OUTMOTOR) ;
+    }
+
   switch (state)
   {
   case STATE_INIT :
@@ -298,7 +324,7 @@ void pivot21_task(void)
       app_dbg_msg("START TIME IS CURRENT TIME\n");
       
     }
-    if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 )) && (time_cond <= 20))
+    if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 )) && (time_cond <= time_on))
     {
 
       set_state(STATE_START); /* enter the start state to start the process of irrigation*/
@@ -320,7 +346,6 @@ void pivot21_task(void)
     dio_turnoff(MOTOR);
     dio_turnoff(WATER);  /* Turn off the pivot*/
     app_dbg_msg("I am stopped\n");
-    init_cond = true;
     if (man_state == true)
     {
       set_state(STATE_STOP); /* Enter the manual mode  */

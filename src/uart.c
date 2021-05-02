@@ -1,11 +1,11 @@
 #include <xc.h>
 
-#include "interrupt.h"
 #include "helpers.h"
 #include "sysclk.h"
 #include "pic32_config.h"
 #include "gpio.h"
 
+#include "interrupt.h"
 #include "uart.h"
 
 #define PIC32_FUNC_U1TX     (0x01)

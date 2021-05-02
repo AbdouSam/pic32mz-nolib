@@ -84,5 +84,6 @@ typedef struct rtc_clock
 }rtc_clock;
 
 int rtc_controller_getclock(rtc_clock *clock);
+uint32_t rtc_controller_gettime(void);
 
 #endif /* _RTCCONTROLLER_H */

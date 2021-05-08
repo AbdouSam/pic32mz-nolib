@@ -20,7 +20,7 @@
 #define STATE_STOP   1 /* to stop the program*/
 #define STATE_MOV    2 /* to start moving the pivot*/
 #define STATE_IRRIG  3 /* to start watering the field*/
-#define STATE_ECO    4 /* to use the economic mode */
+//#define STATE_ECO    4 /* to use the economic mode */
 #define STATE_NORMAL 5 /* tu use the normal mode*/
 #define STATE_PROB   6 /* to indicates some issues and stop the program*/
 #define STATE_START  7 /* to manage between irrigation and movement*/
@@ -30,7 +30,6 @@
 #define TMAX         (80)  /* reading the max value of the sensor*/
 #define TMIN         (-20)   /* reading the min value OF THE SENSOR*/
 #define MINUTE       (60000) /* csnt for one minute */
-
 /* Digital Outputs*/
 #define MOTOR       0   /* signal to turn on the motor*/
 #define WATER       1   /* signal to the pompe */
@@ -70,6 +69,7 @@ static int time_cond;
 static bool init_cond = false;
 static SYS_TMR_HANDLE time_move_handle;
 static SYS_TMR_HANDLE time_irrig_handle;
+static int hr;
 
 
 
@@ -104,33 +104,32 @@ void irrig_done ( uintptr_t context, uint32_t currTick )
 {
       dio_turnoff(WATER) ;
 
-      if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= time_on) )
-    {
-         
+  if ((((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= time_on)) && (((hr >= 22 || hr <= 5) && eco == true) || eco == false))
+    {    
         set_state(STATE_MOV);
         app_dbg_msg("I am done irrigating! \n ");
     }
-    else {
+  else 
+    {
       app_dbg_msg("stop time is up irrig \n ");
-      set_state(STATE_STOP ); /* enter the stop state to stop the program */
+      set_state(STATE_STOP); /* enter the stop state to stop the program */
     }
 
 }
 void disp_done ( uintptr_t context, uint32_t currTick )
 { 
      dio_turnoff(MOTOR) ;
-    if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= time_on) )
+  if ((((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 )) && (time_cond <= time_on)) && (((hr >= 22 || hr <= 5) && eco == true) || eco == false))
     {
 
   set_state(STATE_IRRIG);
   app_dbg_msg("I am done moving! \n ");
     }
-    else {
+    else 
+    {
        app_dbg_msg("stop time is up mooove \n ");
       set_state(STATE_STOP ); /* enter the stop state to stop the program */
     }
-
-
 }
 
 void stp_timer_cb( uintptr_t context, uint32_t currTick )
@@ -239,12 +238,13 @@ void pivot21_task(void)
     time_cond = curr_time - start_time; // time interval
      app_dbg_msg("time condtion is %d",time_cond);
     rtc_controller_getclock(&curr_clock); 
- /* curr_time += 500; time increments with 500ms*/
-    if (eco == true)
+    /* curr_time += 500; time increments with 500ms*/
+    /*if (eco == true)
     {
       app_dbg_msg(" ECO  TEST IF true\n");
-      set_state( STATE_ECO ); /* enter the economic mode*/
+      set_state( STATE_ECO ); /* enter the economic mode
     }
+      */
     if (man_state == true ) /* manual mode or automatic mode*/
     {
       set_state(STATE_STOP);
@@ -270,50 +270,26 @@ void pivot21_task(void)
     {
       state_entery = false;
       app_dbg_msg("I am in initial mode \n");
-
     }
     /*dio_turnon(4);*/
     /*SYS_TMR_CallbackSingle (3000, 0, stp_timer_cb); to schedule  time operation*/
     /*dio_turnoff(5);*/
-
-    if (eco == false )
-    {
       set_state( STATE_NORMAL );
-    }
-    /* enter the normal mode      */
-    break;
-  }
-  case STATE_ECO :
-  { 
-    app_dbg_msg(" ECO 1\n");
-    if (state_entery)
-    {
-      state_entery = false;
-    app_dbg_msg("I am in eco mode\n");
-    }
-    app_dbg_msg(" ECO 2\n");
-    int hr = curr_clock.time.hours;  /* put variable hr equal to the actual hour (ask Abdallah)*/
-    app_dbg_msg("time is %d \n", hr );
-    
-    if (hr >= 22 || hr <= 5)
-    {
-      set_state(STATE_NORMAL );  /* enter the normal mode*/
-    }
-    else
-    {
-      set_state(STATE_STOP); /* enter the stop state to stop the program */
-    }
+
     break;
   }
 
   case STATE_NORMAL :
-  {
+  {    
+  int hr = curr_clock.time.hours;  /* put variable hr equal to the actual hour (ask Abdallah)*/
+  app_dbg_msg("time is %d \n", hr );
 
+  if ( ( (hr >= 22 || hr <= 5) && eco == true) || eco == false )
+    {
     if (state_entery)
     {
       state_entery = false;
       app_dbg_msg("I am in normal mode\n");
-
     }
 
     if (init_cond)
@@ -321,16 +297,21 @@ void pivot21_task(void)
       init_cond = false;
       curr_time = start_time;
       time_cond = curr_time - start_time;
-      app_dbg_msg("START TIME IS CURRENT TIME\n");
-      
+      app_dbg_msg("START TIME IS CURRENT TIME\n");      
     }
+
     if (((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 )) && (time_cond <= time_on))
     {
-
       set_state(STATE_START); /* enter the start state to start the process of irrigation*/
     }
-    else {
+    else
+    {
       set_state(STATE_STOP ); /* enter the stop state to stop the program */
+    }
+    }
+    else 
+    {
+      set_state( STATE_STOP );  
     }
     break;
   }
@@ -440,3 +421,26 @@ void pivot21_task(void)
   }
 }
 
+
+ /*case STATE_ECO :
+  { 
+    app_dbg_msg(" ECO 1\n");
+    if (state_entery)
+    {
+      state_entery = false;
+    app_dbg_msg("I am in eco mode\n");
+    }
+    app_dbg_msg(" ECO 2\n");
+    int hr = curr_clock.time.hours;  /* put variable hr equal to the actual hour (ask Abdallah)
+    app_dbg_msg("time is %d \n", hr );
+    
+    if (hr >= 22 || hr <= 5)
+    {
+      set_state(STATE_NORMAL );  /* enter the normal mode
+    }
+    else
+    {
+      set_state(STATE_STOP); /* enter the stop state to stop the program 
+    }
+    break;
+  } */ 

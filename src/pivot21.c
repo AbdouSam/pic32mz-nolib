@@ -139,7 +139,7 @@ static bool check_failures(void)
          true;
 }
 
-void irrig_done( uintptr_t context, uint32_t currTick )
+static void irrig_done( uintptr_t context, uint32_t currTick )
 {
   dio_turnoff(WATER);
   set_state(STATE_MOV);
@@ -147,7 +147,7 @@ void irrig_done( uintptr_t context, uint32_t currTick )
 
 }
 
-void disp_done( uintptr_t context, uint32_t currTick )
+static void disp_done( uintptr_t context, uint32_t currTick )
 {
   dio_turnoff(MOTOR_FWD);
   dio_turnoff(MOTOR_BWD);
@@ -155,7 +155,7 @@ void disp_done( uintptr_t context, uint32_t currTick )
   app_dbg_msg("I am done moving! \n ");
 }
 
-void ppos_done(uintptr_t context, uint32_t cuurTick)
+static void ppos_done(uintptr_t context, uint32_t cuurTick)
 {
   /* Recheck ppos after 5 seconds */
   if (ppos)
@@ -188,7 +188,7 @@ void ppos_done(uintptr_t context, uint32_t cuurTick)
  *  }
  */
 
-void check_water()
+static void check_water()
 {
   if (pwater == true )
     {
@@ -201,7 +201,7 @@ void check_water()
     }
 }
 
-void check_motor()
+static void check_motor()
 {
   if (pmotor == true)
     {
@@ -215,7 +215,7 @@ void check_motor()
     }
 }
 
-void check_elec()
+static void check_elec()
 {
   if ( pelec == true)
     {
@@ -228,7 +228,7 @@ void check_elec()
     }
 }
 
-void check_pos()
+static void check_pos()
 {
   if (ppos == true )
     {
@@ -241,7 +241,7 @@ void check_pos()
     }
 }
 
-void gethum(void)
+static void gethum(void)
 {
   uint16_t Dhum;
 
@@ -250,7 +250,7 @@ void gethum(void)
   hum = Dhum * 100 / 4095;
 }
 
-void gettemp(void)
+static void gettemp(void)
 {
   uint16_t Dtemp;
 
@@ -285,8 +285,8 @@ void pivot21_task(void)
   pwater    = dio_read(INWATER);
   eco       = dio_read(ECO);
 
-  curr_hr = curr_clock.time.hours;  /* put variable curr_hr equal to the actual
-                                     *hour (ask Abdallah)*/
+   /* put variable curr_hr equal to the actual hour (ask Abdallah)*/
+  curr_hr = curr_clock.time.hours; 
   app_dbg_msg("time is %d \n", curr_hr );
 
   if (eco == true)
@@ -379,13 +379,13 @@ void pivot21_task(void)
 
           if (is_weather_valid() && is_time_valid())
             {
-              set_state(STATE_START); /* enter the start state to start the
-                                       *process of irrigation*/
+               /* enter the start state to start the process of irrigation*/
+              set_state(STATE_START);
             }
           else
             {
-              set_state(STATE_STOP ); /* enter the stop state to stop the
-                                       *program */
+              /* enter the stop state to stop the program */
+              set_state(STATE_STOP ); 
             }
         }
       else
@@ -473,12 +473,8 @@ void pivot21_task(void)
               dio_turnoff(MOTOR_FWD);
               dio_turnon(MOTOR_BWD);
             }
-
-          time_move_handle =  SYS_TMR_CallbackSingle(time_move, 0, disp_done ); /*the
-                                                                                 *pivot
-                                                                                 *is
-                                                                                 *done
-                                                                                 *displacing*/
+          /* the pivot is done displacing */
+          time_move_handle =  SYS_TMR_CallbackSingle(time_move, 0, disp_done ); 
         }
 
       /*
@@ -501,12 +497,8 @@ void pivot21_task(void)
             {
               new_ppos = false;
               app_dbg_msg("Position problem detectected.\n");
-              ppos_handle = SYS_TMR_CallbackSingle(5000, 0, ppos_done ); /*the
-                                                                          *pivot
-                                                                          *is
-                                                                          *done
-                                                                          *irrigating*/
-
+              /* the pivot is done irrigating */
+              ppos_handle = SYS_TMR_CallbackSingle(5000, 0, ppos_done ); 
             }
         }
 
@@ -525,11 +517,8 @@ void pivot21_task(void)
           state_entery = false;
           dio_turnon(WATER);
           app_dbg_msg("I am irigating\n");
-          time_irrig_handle = SYS_TMR_CallbackSingle(time_irrig, 0, irrig_done ); /*the
-                                                                                   *pivot
-                                                                                   *is
-                                                                                   *done
-                                                                                   *irrigating*/
+          /* the pivot is done irrigating */
+          time_irrig_handle = SYS_TMR_CallbackSingle(time_irrig, 0, irrig_done ); 
         }
 
       if (!(( is_weather_valid() &&

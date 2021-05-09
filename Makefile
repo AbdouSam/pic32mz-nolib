@@ -82,8 +82,7 @@ clean:
 
 # watchout, this routine uncrustify all files in src directory
 uncrustify:
-	@uncrustify -c uncrustify_deo.cfg --no-backup src/*.c --suffix
-	@uncrustify -c uncrustify_deo.cfg --no-backup src/*.h --suffix
+	@uncrustify -c uncrustify_deo.cfg --no-backup src/pivot21.c
 
 printfiles:
 	@echo "src files: $(SRC_C)"

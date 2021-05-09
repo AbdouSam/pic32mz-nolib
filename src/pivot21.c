@@ -69,7 +69,7 @@ static int time_cond;
 static bool init_cond = false;
 static SYS_TMR_HANDLE time_move_handle;
 static SYS_TMR_HANDLE time_irrig_handle;
-static int hr;
+static int curr_hr;
 
 
 
@@ -79,6 +79,7 @@ static int hr;
 int pivot21_enable(void)
 {
   init_cond = true;
+  read_start_time = true;
   return 0;
 }
 
@@ -90,6 +91,7 @@ int pivot21_disable(void)
 
 int pivot21_set_timeon(int t)
 {
+  
   time_on = t;
   return 0;
 }
@@ -100,36 +102,32 @@ void set_state (int st)
   state_entery = true;
 }
 
+static bool is_weather_valid(void)
+{
+  return ((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ));
+}
+
+static bool is_time_valid(void)
+{
+  return (time_cond <= time_on);
+}
+static bool is_eco_time(void)
+{
+  return (curr_hr >= 22 || curr_hr <= 5);
+}
+
 void irrig_done ( uintptr_t context, uint32_t currTick )
 {
-      dio_turnoff(WATER) ;
-
-  if ((((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 ) ) && (time_cond <= time_on)) && (((hr >= 22 || hr <= 5) && eco == true) || eco == false))
-    {    
-        set_state(STATE_MOV);
-        app_dbg_msg("I am done irrigating! \n ");
-    }
-  else 
-    {
-      app_dbg_msg("stop time is up irrig \n ");
-      set_state(STATE_STOP); /* enter the stop state to stop the program */
-    }
+  dio_turnoff(WATER) ;
+  set_state(STATE_MOV);
+  app_dbg_msg("I am done irrigating! \n ");
 
 }
 void disp_done ( uintptr_t context, uint32_t currTick )
 { 
-     dio_turnoff(MOTOR) ;
-  if ((((hum < 50 && temp < 27 ) || (hum < 20 && temp > 40 )) && (time_cond <= time_on)) && (((hr >= 22 || hr <= 5) && eco == true) || eco == false))
-    {
-
-  set_state(STATE_IRRIG);
-  app_dbg_msg("I am done moving! \n ");
-    }
-    else 
-    {
-       app_dbg_msg("stop time is up mooove \n ");
-      set_state(STATE_STOP ); /* enter the stop state to stop the program */
-    }
+   dio_turnoff(MOTOR) ;
+   set_state(STATE_IRRIG);
+   app_dbg_msg("I am done moving! \n ");
 }
 
 void stp_timer_cb( uintptr_t context, uint32_t currTick )
@@ -226,23 +224,31 @@ void pivot21_task(void)
   pelec  = dio_read(INELEC);
   pwater = dio_read(INWATER);
   eco    = dio_read(ECO) ;
+  
+  curr_hr = curr_clock.time.hours;  /* put variable curr_hr equal to the actual hour (ask Abdallah)*/
+  app_dbg_msg("time is %d \n", curr_hr );
 
+  if (eco == true) 
+  { 
+    app_dbg_msg("I am in eco mode\n");
+  }
+  
   app_dbg_msg("Check problems \n ");
   /* Read current clock from RTC*/
   app_dbg_msg("reading current time \n");
   curr_time =  rtc_controller_gettime(); 
-  app_dbg_msg("current_time is %d",curr_time);
+  app_dbg_msg("current_time is %d\n",curr_time);
 
     /* time */
     app_dbg_msg("I am checking the time interval\n");
     time_cond = curr_time - start_time; // time interval
-     app_dbg_msg("time condtion is %d",time_cond);
+     app_dbg_msg("time condtion is %d\n",time_cond);
     rtc_controller_getclock(&curr_clock); 
     /* curr_time += 500; time increments with 500ms*/
     /*if (eco == true)
     {
       app_dbg_msg(" ECO  TEST IF true\n");
-      set_state( STATE_ECO ); /* enter the economic mode
+      set_state( STATE_ECO );  enter the economic mode
     }
       */
     if (man_state == true ) /* manual mode or automatic mode*/
@@ -281,11 +287,13 @@ void pivot21_task(void)
 
   case STATE_NORMAL :
   {    
-  int hr = curr_clock.time.hours;  /* put variable hr equal to the actual hour (ask Abdallah)*/
-  app_dbg_msg("time is %d \n", hr );
+  
 
-  if ( ( (hr >= 22 || hr <= 5) && eco == true) || eco == false )
+
+  if ((is_eco_time() && eco == true) || eco == false )
     {
+ 
+
     if (state_entery)
     {
       state_entery = false;
@@ -315,6 +323,7 @@ void pivot21_task(void)
     }
     break;
   }
+
   case STATE_STOP :
   {
     if (state_entery)
@@ -322,11 +331,13 @@ void pivot21_task(void)
       state_entery = false;
       app_dbg_msg("I am stopped\n");
     }
+
     SYS_TMR_CallbackStop ( time_move_handle );
     SYS_TMR_CallbackStop ( time_irrig_handle );
     dio_turnoff(MOTOR);
     dio_turnoff(WATER);  /* Turn off the pivot*/
     app_dbg_msg("I am stopped\n");
+
     if (man_state == true)
     {
       set_state(STATE_STOP); /* Enter the manual mode  */
@@ -349,18 +360,21 @@ void pivot21_task(void)
         read_start_time = false ;
         app_dbg_msg("reading the start time \n");
         start_time = rtc_controller_gettime();
-         app_dbg_msg("start_time is %d", start_time);
+         app_dbg_msg("start_time is %d\n", start_time);
        }
+         set_state(STATE_MOV );
 
-    if (start_timer_mov == true)/*we can remove the true when the variable is bool*/
+  #if 0
+     (start_timer_mov == true)/*we can remove the true when the variable is bool*/
     {
       start_timer_mov = false;
 
       //SYS_TMR_CallbackSingle (time_on, 0, stp_timer_cb);
       /*to schedule  time operation*/
       app_dbg_msg("the timer is started\n");
-      set_state(STATE_MOV );
+      
     }
+    #endif
   
     break;
     /* start movement and irrigation*/
@@ -376,10 +390,18 @@ void pivot21_task(void)
     }
     /*state = STATE_IRRIG ; <== removed*/
     /* we need to take in cosideration that angle it moves with, if we don't we would be working with only one stick!!*/
+    
+    if (!(( is_weather_valid() && is_time_valid()) && (( is_eco_time() && eco == true) || eco == false)))
+    {    
+      app_dbg_msg("stop time is up irrig \n ");
+      set_state(STATE_STOP); /* enter the stop state to stop the program */
+    }
+
     break;
     /* we add some breaks*/
     /* start movement and enter irrigation mode*/
   }
+
   case STATE_IRRIG :
   {
     if (state_entery)
@@ -389,7 +411,14 @@ void pivot21_task(void)
       app_dbg_msg("I am irigating\n");
       time_irrig_handle = SYS_TMR_CallbackSingle (time_irrig, 0 , irrig_done ); /*the pivot is done irrigating*/
     }
+
+    if (!(( is_weather_valid() && is_time_valid()) && (( is_eco_time() && eco == true) || eco == false)))
+    {    
+      app_dbg_msg("stop time is up irrig \n ");
+      set_state(STATE_STOP); /* enter the stop state to stop the program */
+    }
     break;
+
     /* start irrigation*/
   }
   case STATE_PROB :
@@ -422,7 +451,8 @@ void pivot21_task(void)
 }
 
 
- /*case STATE_ECO :
+#if 0
+ case STATE_ECO :
   { 
     app_dbg_msg(" ECO 1\n");
     if (state_entery)
@@ -431,16 +461,18 @@ void pivot21_task(void)
     app_dbg_msg("I am in eco mode\n");
     }
     app_dbg_msg(" ECO 2\n");
-    int hr = curr_clock.time.hours;  /* put variable hr equal to the actual hour (ask Abdallah)
-    app_dbg_msg("time is %d \n", hr );
+    int curr_hr = curr_clock.time.hours;  /* put variable curr_hr equal to the actual hour (ask Abdallah) */
+    app_dbg_msg("time is %d \n", curr_hr );
     
-    if (hr >= 22 || hr <= 5)
+    if (curr_hr >= 22 || curr_hr <= 5)
     {
-      set_state(STATE_NORMAL );  /* enter the normal mode
+      set_state(STATE_NORMAL );  /* enter the normal mode */
     }
     else
     {
-      set_state(STATE_STOP); /* enter the stop state to stop the program 
+      set_state(STATE_STOP); /* enter the stop state to stop the program */
     }
     break;
-  } */ 
+  }
+
+ #endif

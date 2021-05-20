@@ -93,8 +93,6 @@ static int motor_direction = DIR_FWD;
 
 /* static bool start_timer_mov = true ; this should be connected to a bool pin "once f denia used"*/
 
-
-
 /***********************************************
  * 
  ***********************************************/
@@ -104,6 +102,12 @@ typedef struct
   int start;  
   int size;  
 }parse_data_t;
+
+void set_state (int st)
+{
+  state = st;
+  state_entery = true;
+}
 
 int pivot21_set_parameter(const char *frame)
 {
@@ -215,10 +219,18 @@ int pivot21_set_parameter(const char *frame)
   /* Start the cycle when we receive data */
   init_cond = true;
   read_start_time = true;
+  set_state(STATE_STOP) ; 
 
   return 0;
 }
 
+int pivot21_set_eco_mode(bool eco_state)
+{
+  eco  = eco_state;
+  app_dbg_msg("APP: eco mode %s\n", (eco == true) ? "ENABLED" : "DISABLED");
+
+  return 0;
+}
 
 int pivot21_set_parameter_default(void)
 {
@@ -314,11 +326,6 @@ int pivot21_read_parameter(const char *frame, char *retframe)
   return 0;
 }
 
-void set_state (int st)
-{
-  state = st;
-  state_entery = true;
-}
 /* functions */
 
 static bool is_weather_valid(void)
@@ -476,7 +483,7 @@ void pivot21_task(void)
   pmotor = dio_read(INMOTOR);
   pelec  = dio_read(INELEC);
   pwater = dio_read(INWATER);
-  eco    = dio_read(ECO) ;
+  /*eco    = dio_read(ECO) ;*/ /* activate eco mode using frame */
   
   curr_hr = curr_clock.time.hours;  /* put variable curr_hr equal to the actual hour (ask Abdallah)*/
   app_dbg_msg("time is %d \n", curr_hr );

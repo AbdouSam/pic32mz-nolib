@@ -6,8 +6,11 @@
 #include <stdbool.h>
 
 #include <xc.h>
+#include <string.h>
 
 #include "pic32_config.h"
+#include "debug.h"
+
 #include "helpers.h"
 #include "sysclk.h"
 #include "gpio.h"
@@ -19,7 +22,7 @@
 #include "rtc.h"
 #include "app.h"
 #include "uart.h"
-
+#include "plc.h"
 /* This define is to set the  µC to run on internal clock
  * config is set to run CPU at 200 Mhz,
  * with internal or 24Mhz external clock
@@ -109,6 +112,9 @@ static int           rx_index = 0;
 static unsigned char rtc_val[7];
 static unsigned int  millis = 0;
 static bool          wdt_clear_flag = true;
+static unsigned int  ladder_millis = 0;
+
+static int ladder_ticktime__ms;
 
 static void wdt_clear(void)
 {
@@ -118,14 +124,6 @@ static void wdt_clear(void)
   wdtclrkey     = ( (volatile uint16_t *)&WDTCON ) + 1;
   *wdtclrkey    = 0x5743;
   asm volatile("ei");
-}
-
-static void print_str(const char *s)
-{
-  while ( *s != '\0')
-    {
-      uart_tx_char(PIC32_UART_4, *s++);
-    }
 }
 
 static char read_char(void)
@@ -146,6 +144,7 @@ void timer_2_callback(void)
   gpio_state_toggle(LED_GREEN);
   wdt_clear_flag = true;
 }
+
 
 void uart_callback(void)
 {
@@ -183,19 +182,23 @@ int app_init(void)
   /* use it to clear watchdog. */
   init_timer2(1, TMR_PRESCALE_256, 0);
 
+  //init_timer3(1000, TMR_PRESCALE_1, 0);
+
   delay_ms(100);
 
   uart_rxi_set(PIC32_UART_4, 3, IF_RBUF_NOT_EMPTY, uart_callback);
   
-  uart_init(PIC32_UART_4, NO_PARITY_8_BIT_DATA, ONE_STOP_BIT, 115200);
+  debug_init();
 
-  print_str("Hello World\n");
+  debug_print("Hello World\n");
 
   i2c_init(100000);
 
   rtc_init();
 
   interrupt_init();
+
+  ladder_ticktime__ms = plc_init();
 
   return 0;
 }
@@ -204,17 +207,23 @@ void app_task(void)
 {
   int c_local;
 
-  if (interrupt_tick_get() - millis >= 500)
+  if (interrupt_tick_get() - millis >= 1000)
     {
       /* test timer/interrupt/gpio */
       gpio_state_toggle(LED_ORANGE);
 
       millis = interrupt_tick_get();
-
+      get_current_time();
       /* test read rtc/ i2c */
       rtc_read_time(rtc_val);
     }
 
+  if (interrupt_tick_get() - ladder_millis >= ladder_ticktime__ms)
+    {
+      /* test timer/interrupt/gpio */
+      ladder_millis = interrupt_tick_get();
+      plc_run();
+    }
   /* test read the uart */
 
   if ((c_tmp >= 'a') && (c_tmp <= 'z'))
@@ -226,11 +235,12 @@ void app_task(void)
 
   if (c_tmp == '\n')
     {
-      print_str("Word: ");
+      debug_print("Word: ");
+
       for (c_local = 0; c_local<10; c_local++)
-        uart_tx_char(PIC32_UART_4, rx_tmp[c_local]);
-      
-      uart_tx_char(PIC32_UART_4, '\n');
+        debug_putc(rx_tmp[c_local]);
+
+      debug_putc('\n');
       c_tmp = 0;
     }
 

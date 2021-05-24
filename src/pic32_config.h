@@ -223,6 +223,8 @@
 #define PIC32_UART_4_RX_PIN         pinB14
 #define PIC32_UART_4_TX_PIN         pinF12
 
-#define UART_ATTACHED_TO_REPL       PIC32_UART_4
+#define UART_ATTACHED_TO_DBG        PIC32_UART_4
+#define CONFIG_DEBUG_RS485_PIN      (pinA10)
+#define UART_DEBUG_BAUDRATE         (115200)
 
 #endif /* INCLUDED_PIC32_CONFIG_H */

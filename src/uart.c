@@ -280,6 +280,10 @@ void uart_tx_char(pic32_uart_t uart_id, int c)
     {
     }
   (*uart_txreg[uart_id]) = (char)c;
+
+  while (((*uart_stat[uart_id]) & USTA_TRMT_MASK) == 0)
+    {
+    }
 }
 
 int uart_rxi_set(pic32_uart_t uart_id, 

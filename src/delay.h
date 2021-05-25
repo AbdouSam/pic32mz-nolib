@@ -13,4 +13,10 @@ void delay_us(uint32_t us);
  */
 void delay_ms(uint32_t ms);
 
+
+uint32_t readcoretimer(void);
+
+void setcoretime(volatile uint32_t count);
+
+
 #endif /* MICROPY_INCLUDED_PIC32BIT_DELAY_H */

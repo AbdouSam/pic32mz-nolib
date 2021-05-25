@@ -5,7 +5,7 @@
  * @brief Read current cp0 timer, used to create delays
  */
 
-static uint32_t readcoretimer(void)
+uint32_t readcoretimer(void)
 {
   volatile uint32_t timer;
 
@@ -18,7 +18,7 @@ static uint32_t readcoretimer(void)
  * @brief Set current cp0 timer count
  */
 
-static void setcoretime(volatile uint32_t count)
+void setcoretime(volatile uint32_t count)
 {
   asm volatile ("mtc0    %0, $9" : : "r" (count));
 }

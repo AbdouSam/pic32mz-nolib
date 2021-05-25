@@ -22,4 +22,17 @@ void plc_run(void);
  */
 
 void get_current_time(void);
+
+
+/**
+ * @brief set mem
+ */
+void plc_set_mem0(float value);
+
+
+/**
+ * 
+ */
+void plc_updatetime(void);
+
 #endif /* PLC_H */

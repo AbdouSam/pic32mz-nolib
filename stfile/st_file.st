@@ -1,24 +1,20 @@
 PROGRAM program0
   VAR
-    tmpreset AT %MD0 : REAL := 3.0;
-    poweron AT %IX0.0 : BOOL;
-    lamp AT %QX0.1 : BOOL;
-  END_VAR
-  VAR
-    TOF0 : TOF;
-    REAL_TO_TIME8_OUT : TIME;
+    bstart AT %IX0.15 : BOOL;
+    bstop AT %IX0.14 : BOOL;
+    led AT %QX0.15 : BOOL;
+    var_byte AT %MB0 : SINT;
+    var_long AT %ML0 : ULINT;
   END_VAR
 
-  REAL_TO_TIME8_OUT := REAL_TO_TIME(tmpreset);
-  TOF0(IN := poweron, PT := REAL_TO_TIME8_OUT);
-  lamp := TOF0.Q;
+  led := NOT(bstop) AND (bstart OR led);
 END_PROGRAM
 
 
 CONFIGURATION Config0
 
   RESOURCE Res0 ON PLC
-    TASK task0(INTERVAL := T#10ms,PRIORITY := 0);
+    TASK task0(INTERVAL := T#1ms,PRIORITY := 0);
     PROGRAM instance0 WITH task0 : program0;
   END_RESOURCE
 END_CONFIGURATION

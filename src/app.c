@@ -112,9 +112,13 @@ static int           rx_index = 0;
 static unsigned char rtc_val[7];
 static unsigned int  millis = 0;
 static bool          wdt_clear_flag = true;
-static unsigned int  ladder_millis = 0;
 
-static int ladder_ticktime__ms;
+
+static bool first_start = true;
+static bool relay_started = false;
+static uint32_t relay_time_now = 0;
+static uint32_t plc_run_timing = 0;
+static bool plc_run_flag = false;
 
 static void wdt_clear(void)
 {
@@ -145,6 +149,11 @@ void timer_2_callback(void)
   wdt_clear_flag = true;
 }
 
+void timer_4_callback(void)
+{
+  plc_run_flag = true;
+  plc_updatetime();
+}
 
 void uart_callback(void)
 {
@@ -173,32 +182,34 @@ int app_init(void)
   gpio_state_clear(LED_RED);
   gpio_state_clear(LED_GREEN);
 
-  /* Set rs485 bit to output (we use a max485 to interface uart) */
-  gpio_state_set(RS485_1_RW);
-
-  /* For the interrupt tick */
-  init_timer1(1000, TMR_PRESCALE_1, 0);
-
-  /* use it to clear watchdog. */
-  init_timer2(1, TMR_PRESCALE_256, 0);
-
-  //init_timer3(1000, TMR_PRESCALE_1, 0);
-
-  delay_ms(100);
-
   uart_rxi_set(PIC32_UART_4, 3, IF_RBUF_NOT_EMPTY, uart_callback);
   
   debug_init();
 
+  delay_ms(100);
+
   debug_print("Hello World\n");
+
+  timer_1_init();
+
+  if (timer_init(PIC32_TIMER_2, 2 /* Hz */, 0) < 0)
+  {
+    debug_print("Timer 2 failed to init\n");
+  } 
+
+  /* Timer for PLC tick */
+  if (timer_init(PIC32_TIMER_4, 1000 /* Hz */, 0) < 0)
+  {
+    debug_print("Timer 4 failed to init\n");
+  } 
 
   i2c_init(100000);
 
   rtc_init();
 
-  interrupt_init();
+  plc_init();
 
-  ladder_ticktime__ms = plc_init();
+  interrupt_init();
 
   return 0;
 }
@@ -216,15 +227,45 @@ void app_task(void)
       get_current_time();
       /* test read rtc/ i2c */
       rtc_read_time(rtc_val);
+      debug_print("Run time plc : %d ns\n", plc_run_timing * 10);
     }
 
-  if (interrupt_tick_get() - ladder_millis >= ladder_ticktime__ms)
-    {
-      /* test timer/interrupt/gpio */
-      ladder_millis = interrupt_tick_get();
-      plc_run();
-    }
+
+  if (plc_run_flag)
+  {
+    plc_run_flag = false;
+    plc_run();
+  }
+
   /* test read the uart */
+
+  if (gpio_state_get(DIG_IN4))
+    {
+      plc_set_mem0(20.0);
+    }
+  else if (gpio_state_get(DIG_IN8))
+    {
+      plc_set_mem0(1.0);
+    }
+
+  if (gpio_state_get(RELAY_OUT5))
+    {
+      if (first_start == true)
+      {
+        first_start = false;
+        relay_time_now = interrupt_tick_get();
+        relay_started = true;
+      }
+    }
+  else
+    {
+      if (relay_started)
+      {
+        relay_started = false;
+        first_start = true;
+        debug_print("Time on %d ms\n", interrupt_tick_get() - relay_time_now);
+      }
+    }
 
   if ((c_tmp >= 'a') && (c_tmp <= 'z'))
     {

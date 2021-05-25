@@ -1,7 +1,7 @@
 #ifndef INCLUDED_PIC32_TIMER_H
 #define INCLUDED_PIC32_TIMER_H
 
-enum
+typedef enum
 {
   PIC32_TIMER_1,
   PIC32_TIMER_2,
@@ -12,7 +12,8 @@ enum
   PIC32_TIMER_7,
   PIC32_TIMER_8,
   PIC32_TIMER_9,
-};
+  PIC32_TIMER_MAX,
+}pic32_timer_t;
 
 typedef enum
 {
@@ -34,57 +35,15 @@ typedef enum
   TMR_PRESCALE_32   = 0b101,
   TMR_PRESCALE_64   = 0b110,
   TMR_PRESCALE_256  = 0b111,
+  TMR_PRESCALE_MAX_INDX  = 8,
 }timers_prescaler_t;
 
-void init_timer1(uint32_t freq, timer1_prescaler_t prescaler,
-                 uint8_t sub_periority);
+void timer_1_init(void);
 
-#if (TIMER_2_ENABLED == 1)
-void init_timer2(uint32_t freq, timers_prescaler_t prescaler,
-                 uint8_t sub_periority);
+int timer_init(pic32_timer_t timer_id, 
+                uint32_t freq,
+                uint8_t subp);
 
-#endif
-
-#if (TIMER_3_ENABLED == 1)
-void init_timer3(uint32_t freq, timers_prescaler_t prescaler,
-                 uint8_t sub_periority);
-
-#endif
-
-#if (TIMER_4_ENABLED == 1)
-void init_timer4(uint32_t freq, timers_prescaler_t prescaler,
-                 uint8_t sub_periority);
-
-#endif
-
-#if (TIMER_5_ENABLED == 1)
-void init_timer5(uint32_t freq, timers_prescaler_t prescaler,
-                 uint8_t sub_periority);
-
-#endif
-
-#if (TIMER_6_ENABLED == 1)
-void init_timer6(uint32_t freq, timers_prescaler_t prescaler,
-                 uint8_t sub_periority);
-
-#endif
-
-#if (TIMER_7_ENABLED == 1)
-void init_timer7(uint32_t freq, timers_prescaler_t prescaler,
-                 uint8_t sub_periority);
-
-#endif
-
-#if (TIMER_8_ENABLED == 1)
-void init_timer8(uint32_t freq, timers_prescaler_t prescaler,
-                 uint8_t sub_periority);
-
-#endif
-
-#if (TIMER_9_ENABLED == 1)
-void init_timer9(uint32_t freq, timers_prescaler_t prescaler,
-                 uint8_t sub_periority);
-
-#endif
+int timer_stop(pic32_timer_t timer_id);
 
 #endif /* INCLUDED_PIC32_TIMER_H */

@@ -201,6 +201,8 @@
 #define TIMER8_INT_PRIO  4
 #define TIMER9_INT_PRIO  4
 
+#define TIMER_1_FREQ (1000) /* Hz */
+
 /* UART */
 
 #define PIC32_UART_1_ENABLED        (0)

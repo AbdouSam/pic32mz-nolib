@@ -61,7 +61,7 @@ $(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/$(CFG_FILE) $(shell mkdir -p 
 
 $(OBJSIEC): $(OBJ_DIR)/%.o: $(SRCIEC_DIR)/%.c
 	@echo "Compile $< to get $@"
-	@$(CROSS_COMPILE)gcc -c -x c $(CFLAGS) $< -o $@  $(LIBS);\
+	@$(CROSS_COMPILE)gcc -c -x c $(CFLAGS) -Wno-unused -Wno-unused-function -Wno-inline $< -o $@  $(LIBS);\
 
 iec_files: $(STFILE_DIR)/$(STFILE)
 	cd $(SRCIEC_DIR);	iec2c ../$(STFILE_DIR)/$(STFILE) -I $(MATIEC_INCLUDE_PATH)	

@@ -251,8 +251,9 @@ int pivot21_read_parameter(const char *frame, char *retframe)
    * T: for temperature
    * H: for humidity
    * M: for Manual Mode
+   * E: for eco Mode
    * F: for Failures
-   * 0: Position Faiure 
+   * 0: Position Failure 
    * 1: Motor Failure
    * 2: Electric Failure
    * 3: Water Failure
@@ -260,7 +261,7 @@ int pivot21_read_parameter(const char *frame, char *retframe)
    * Parse with data is requested depending on the fifth character in the frame.
    */
 
-  app_dbg_msg("APP: Request Parameter %c\n", frame[5]);
+  app_dbg_msg("APP: Request Parameter %c %c\n", frame[5] , frame[6]);
 
   switch(frame[5])
   {
@@ -282,36 +283,48 @@ int pivot21_read_parameter(const char *frame, char *retframe)
       break;
     }
 
+    case 'E':
+    {
+      sprintf(retframe, "%d", eco);
+      break;
+    }
+
     case 'F':
     {
       switch(frame[6])
       {
         case '0':
         {
-          sprintf(retframe, "%d", ppos);
+          app_dbg_msg("APP: Pb pos %d \n", ppos==true?1:0);
+          sprintf(retframe, "%d", ppos==true?1:0);
           break;
         }
 
         case '1':
         {
-          sprintf(retframe, "%d", pmotor);
+          app_dbg_msg("APP: Pb motor %d \n", pmotor==true?1:0);
+          sprintf(retframe, "%d", pmotor==true?1:0);
           break;
         }
 
         case '2':
         {
-          sprintf(retframe, "%d", pelec);
+          app_dbg_msg("APP: Pb elec %d \n", pelec==true?1:0);
+          sprintf(retframe, "%d", pelec==true?1:0);
           break;
         }
         
         case '3':
         {
-          sprintf(retframe, "%d", pwater);
+          app_dbg_msg("APP: Pb water %d \n", pwater==true?1:0);
+          sprintf(retframe, "%d", pwater==true?1:0);
           break;
         }
-      }
+        default:
+          app_dbg_msg("APP: Pb unknwn\n");
 
-      sprintf(retframe, "%d", hum);
+        break;
+      }
       break;
     }
 
@@ -711,11 +724,12 @@ void pivot21_task(void)
     if (state_entery)
     {
       state_entery = false;
-      app_dbg_msg("I have a problem\n");
+      app_dbg_msg("I have a problem on: Pos = %d  Elec = %d Motor = %d Water = %d\n", ppos, pelec, pmotor, pwater);
       check_pos() ; 
       check_elec() ;
       check_motor();
       check_water();
+
       dio_turnoff(MOTOR_FWD);
       dio_turnoff(MOTOR_BWD);
       dio_turnoff(WATER);

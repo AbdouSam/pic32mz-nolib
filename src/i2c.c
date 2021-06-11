@@ -1,53 +1,52 @@
 #include <xc.h>
 #include "sysclk.h"
 
-#define I2C_TPGD  (104 * (10 ^ (-9)))
 
-/* I2C uses 7bit slave address, the the 8th bit sets the mode
+/**
+ * I2C uses 7bit slave address, the the 8th bit sets the mode
  * the reason of this connection, Write mode (8th : 0) or Read mode (8th: 1)
  * The last bit is addes as the last bit in the address, which is the first
- *thing to send
+ * thing to send
  * after the start bit (the start bit is generated automatically.)
  * if address is 0x68, we always shift to the left 0x68 << 1 = 0xD0
  * then if we want to write data we leave it as it is (0)
  * if we want to Read data we set the bit to 1 0xD0 | 1 = 0xD1
  *
  * if the device is connected and ready we must receice an ACK signal in the 9th
- *bit.
+ * bit.
  * or the 9th clock cycle from the begining.
  *
  * Then immediatly after receiving the ACK we send in the Regitster  address
  * we want to read from or write to, the devices responds by an ACK if the
- *address is valid
+ * address is valid
  *
  * Then after the ACK is received we have a couple of options
  * - if we want to write a single byte of data we send The data directly receive
- *another ACk
- *   then stop with a stop contion
+ *   another ACK,then stop with a stop contion
  * - if we want to read the register we set we send again a start conditoion
- *with read bit (RW)
+ *   with read bit (RW)
  *   we receive the ack again, ,then read the data directly afterward
  * - if we want to read a sequence of bytes. we continue reading until we are
- *done then we stop
- *   with a nack then a stop condition
+ *   done then we stop with a nack then a stop condition
  * - if we want to write a sequence, we keep sending data after each Ack until
- *we send a stop
- *   condition.
+ *   we send a stop condition.
  *
  * we proceed to Read the Data itself or Write the data.
  * the Data format is 8 bits at a time.
  *
  * After the data received if it is a read, we don't need to wait for Ack, the
- *data is a response
+ * data is a response
  * that the device is working, we continue to read as much as we wont, we send
- *an NACK to the device
+ * an NACK to the device
  * to inform the device to stop sending data
  * or After a write we just stop writing
  * Send a stop bit.
  *
  * if want to re write or re-read again we have to start from the begining by
- *start bit address etc...
+ * start bit address etc...
  */
+
+static const double I2C_TPGD  = (104.0 * (10 ^ (-9)));
 
 void i2c_init(double speed)
 {

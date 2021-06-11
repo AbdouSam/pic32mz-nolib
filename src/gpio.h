@@ -232,7 +232,9 @@ void gpio_init(void);
 bool gpio_state_get(pic32_pin_t nbr);
 
 void gpio_state_write(pic32_pin_t nbr, bool state);
+
 void gpio_state_set(pic32_pin_t nbr);
+
 void gpio_state_clear(pic32_pin_t nbr);
 
 void gpio_state_toggle(pic32_pin_t nbr);

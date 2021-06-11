@@ -22,7 +22,7 @@
 #include "rtc.h"
 #include "app.h"
 #include "uart.h"
-#include "plc.h"
+
 /* This define is to set the  µC to run on internal clock
  * config is set to run CPU at 200 Mhz,
  * with internal or 24Mhz external clock
@@ -117,7 +117,6 @@ static bool          wdt_clear_flag = true;
 static bool first_start = true;
 static bool relay_started = false;
 static uint32_t relay_time_now = 0;
-static uint32_t plc_run_timing = 0;
 static bool plc_run_flag = false;
 
 static void wdt_clear(void)
@@ -152,7 +151,6 @@ void timer_2_callback(void)
 void timer_4_callback(void)
 {
   plc_run_flag = true;
-  plc_updatetime();
 }
 
 void uart_callback(void)
@@ -197,7 +195,6 @@ int app_init(void)
     debug_print("Timer 2 failed to init\n");
   } 
 
-  /* Timer for PLC tick */
   if (timer_init(PIC32_TIMER_4, 1000 /* Hz */, 0) < 0)
   {
     debug_print("Timer 4 failed to init\n");
@@ -206,8 +203,6 @@ int app_init(void)
   i2c_init(100000);
 
   rtc_init();
-
-  plc_init();
 
   interrupt_init();
 
@@ -224,29 +219,11 @@ void app_task(void)
       gpio_state_toggle(LED_ORANGE);
 
       millis = interrupt_tick_get();
-      get_current_time();
+
       /* test read rtc/ i2c */
       rtc_read_time(rtc_val);
-      debug_print("Run time plc : %d ns\n", plc_run_timing * 10);
     }
 
-
-  if (plc_run_flag)
-  {
-    plc_run_flag = false;
-    plc_run();
-  }
-
-  /* test read the uart */
-
-  if (gpio_state_get(DIG_IN4))
-    {
-      plc_set_mem0(20.0);
-    }
-  else if (gpio_state_get(DIG_IN8))
-    {
-      plc_set_mem0(1.0);
-    }
 
   if (gpio_state_get(RELAY_OUT5))
     {

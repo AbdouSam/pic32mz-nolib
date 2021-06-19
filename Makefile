@@ -27,7 +27,6 @@ CSRCS = main.c \
         adc_controller.c \
         dio.c \
         pivot21.c \
-        debug.c \
 
 OBJ_SYS_TMR = $(OBJ_DIR)/sys_tmr.o
 SRC_SYS_TMR = $(SRC_DIR)/system/tmr/sys_tmr.c
